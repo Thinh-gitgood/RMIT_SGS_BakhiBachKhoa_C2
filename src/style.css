@@ -1198,6 +1198,16 @@ h1 {
   background: #f4fbf7;
 }
 
+.shard-card.dormant-card {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.shard-card.eligible-card {
+  border-color: #93c5fd;
+  background: #f5f9ff;
+}
+
 .shard-card-top {
   display: flex;
   justify-content: space-between;
@@ -1222,6 +1232,16 @@ h1 {
 .shard-state.pending {
   background: var(--amber-bg);
   color: var(--amber);
+}
+
+.shard-state.dormant {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.shard-state.eligible {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .shard-state.signed {
@@ -1261,6 +1281,59 @@ h1 {
   padding: 6px 9px;
   border-radius: 6px;
   margin-bottom: 10px;
+}
+
+.revocation-pill.dormant-pill {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.guardrail-box {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: #334155;
+}
+
+.guardrail-box strong {
+  display: block;
+  font-size: 11px;
+  color: #0f172a;
+  margin-bottom: 5px;
+}
+
+.guardrail-box ul {
+  margin: 0;
+  padding-left: 16px;
+  line-height: 1.5;
+}
+
+.guardrail-box li + li {
+  margin-top: 4px;
+}
+
+.dormant-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dormant-actions .button.full-width {
+  margin-top: 4px;
+}
+
+.simulate-breach-btn {
+  border-color: var(--crimson-border) !important;
+  color: var(--crimson) !important;
+  background: var(--crimson-bg) !important;
+}
+
+.simulate-breach-btn:hover {
+  background: #ffe4e6 !important;
 }
 
 .shard-statement {

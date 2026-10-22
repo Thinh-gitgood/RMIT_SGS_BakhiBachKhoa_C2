@@ -158,6 +158,12 @@ export default function App() {
 
   async function handleSignShard(shardKey) {
     if (signedShards[shardKey]) return;
+    if (shardKey === "thinh" && !rogueBreachLogged) {
+      setNotice(
+        "🔒 Guardrail Active: Dr. Cường Thịnh’s Arbitration Shard is dormant while Nhật Tân is in good standing. An immutable 403 breach must be logged first.",
+      );
+      return;
+    }
 
     const nextShards = { ...signedShards, [shardKey]: true };
     const nextCount = Object.values(nextShards).filter(Boolean).length;
@@ -178,9 +184,6 @@ export default function App() {
         "quorum",
       );
     } else if (shardKey === "thinh") {
-      if (!rogueBreachLogged) {
-        setRogueBreachLogged(true);
-      }
       appendAudit(
         "Dr. Cường Thịnh (Ethics Chair · Arbitration Shard 3/3)",
         `Rogue Shard Revoked & Arbitration Shard Signed (${nextCount}/3 Shards)`,

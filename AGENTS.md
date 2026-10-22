@@ -19,7 +19,8 @@
   - **Không có Master Key ở trạng thái nghỉ (No Authority at Rest):** Không một Super-Admin, Trưởng nhóm hay máy chủ backend nào có thể đơn phương giải mã toàn bộ gói tài sản trí tuệ của nhóm.
   - **Kiến trúc Bảo mật Phân tầng 2 Lớp (Two-Tier Cryptographic Architecture):**
     - **Lớp 1 — Client-Side E2EE & Working Preview (Phục vụ công việc hàng ngày):** Các đồng tác giả hợp lệ có thể xem bản tóm tắt công việc (`Working Metadata / Preview`) thông qua cơ chế kiểm tra chính sách gắn thẻ (`Tag-based Policy`) của TideCloak trên trình duyệt, trong khi máy chủ lưu trữ và IT Admin chỉ nhìn thấy **100% Ciphertext** (`AES-256-GCM` / `TIDE_E2EE_V1`).
-    - **Lớp 2 — Quorum-Locked Master IP Bundle (Xuất bản & Thương mại hóa):** Quyền giải mã và trích xuất trọn bộ tài sản gốc (`Full Plaintext IP Bundle`) để nộp bài báo IEEE hoặc chuyển giao thương mại hóa **hoàn toàn không tồn tại sẵn ở trạng thái nghỉ**. Thẩm quyền này chỉ phái sinh tạm thời (*emerges transiently*) ngay trên trình duyệt khi hội tụ đủ **3/3 mảnh khóa độc lập (3-of-3 Authority Shards)**.
+    - **Lớp 2 — Quorum-Locked Master IP Bundle (Xuất bản & Thương mại hóa):** Quyền giải mã và trích xuất trọn bộ tài sản gốc (`Full Plaintext IP Bundle`) để nộp bài báo IEEE hoặc chuyển giao thương mại hóa **hoàn toàn không tồn tại sẵn ở trạng thái nghỉ**. Thẩm quyền này chỉ phái sinh tạm thời (*emerges transiently*) ngay trên trình duyệt khi hội tụ đủ **3/3 mảnh khóa độc lập (3-of-3 Threshold Authority Shards)**.
+    - **Tại sao dùng 3-of-3 Threshold Shards trên toàn bộ gói IP thay vì chia mỗi người giữ 1 khóa theo từng file?** Nếu chia theo file (ví dụ mỗi người giữ trọn vẹn khóa của 1 file), kẻ phản bội vẫn có thể tự ý đánh cắp và bán trộm trọn vẹn 1 tài sản độc lập cực kỳ giá trị (như file trọng số `brain_cancer_model.pth`). Việc áp dụng **Threshold Secret Sharing (3/3)** trên toàn bộ gói Master IP đảm bảo mỗi thành viên chỉ giữ **1/3 mảnh toán học của khóa chung** — đứng một mình (`1/3`) sẽ hoàn toàn vô dụng trước cả 3 tài sản.
 
 ---
 
@@ -35,6 +36,10 @@
    - Thành viên có ý định nghỉ nhóm và lén xuất bản/bán trộm toàn bộ mô hình AI cùng bộ dữ liệu cho công ty bên ngoài.
 4. ⚖️ **Dr. Cường Thịnh (RMIT Academic Advisor / Ethics Chair)** — Trọng tài phân xử học thuật (*TideCloak Verified*, Role: `ethics-arbitrator`).
    - Bình thường **không có quyền tự ý mở khóa tài sản của sinh viên**. Tuy nhiên, khi hệ thống ghi nhận bằng chứng vi phạm của Nhật Tân trong **Immutable Audit Log**, Dr. Cường Thịnh có thẩm quyền kích hoạt cơ chế phân xử đạo đức (*Dispute Arbitration*) để thu hồi mảnh khóa của Nhật Tân và ký thay mảnh khóa thứ 3 (`Arbitration Shard 3/3`), giúp Khánh Linh và Trung Quân không bị kẹt đồ án.
+   - **3 Giới hạn Mật mã Cứng (3 Cryptographic Guardrails) đối với Dr. Cường Thịnh:**
+     1. **Chỉ giữ `1/3 Arbitration Shard` (No Unilateral Power):** Không nắm giữ Master Key, không thể tự mình giải mã bất kỳ tài sản nào (luôn cần đủ chữ ký đồng thuận của 2 đồng tác giả còn lại) và không xem được `Working Preview` hàng ngày của sinh viên.
+     2. **Dormant Policy (Ngủ đông mặc định — Chống thông đồng):** Mảnh khóa phân xử bị khóa cứng ở trạng thái `🔒 DORMANT (NO BREACH)` khi Nhật Tân chưa vi phạm (ngăn chặn rủi ro 2 sinh viên thông đồng với giảng viên để loại bỏ một thành viên vô tội). Mảnh khóa này chỉ được mở khóa khi có bằng chứng vi phạm `403` bất biến được ghi nhận trong **Immutable Audit Log**.
+     3. **Public Accountability (Trách nhiệm giải trình bất biến):** Chữ ký số `Ed25519` của Dr. Cường Thịnh cùng biên bản thu hồi quyền của thành viên vi phạm được khắc vĩnh viễn vào **Verified IP Release Certificate** và **Immutable Audit Log**.
 5. 🖥️ **RMIT IT Admin / Cloud Server Operator** — Quản trị viên hạ tầng (`0/3 Shards` — Role: `sysadmin`).
    - Có toàn quyền truy cập cơ sở dữ liệu vật lý nhưng **không có bất kỳ mảnh khóa giải mã nào**. Mọi nỗ lực dùng quyền Admin để ghi đè hoặc đọc dữ liệu đều bị chặn đứng.
 

@@ -106,7 +106,7 @@ docker run -d -p 8080:8080 \
 | 👩‍🔬 **Khánh Linh (AI Lead)** | `co-author` | **Shard 1/3** | Daily working preview; requires 3/3 quorum for full bundle export |
 | 👨‍💻 **Trung Quân (Data Engineer)** | `co-author` | **Shard 2/3** | Daily working preview; requires 3/3 quorum for full bundle export |
 | 🚨 **Nhật Tân (Rogue Member)** | `co-author` | **Shard 3/3** *(Revocable)* | Attempts unilateral sale; blocked by missing quorum (`1/3`) |
-| ⚖️ **Dr. Cường Thịnh (Ethics Chair)** | `ethics-arbitrator` | **Arbitration Shard** | Replaces Nhật Tân's revoked shard upon immutable breach evidence |
+| ⚖️ **Dr. Cường Thịnh (Ethics Chair)** | `ethics-arbitrator` | **Arbitration Shard** *(Dormant)* | Cryptographically dormant until an immutable `403` breach log exists (prevents collusion); replaces Nhật Tân's revoked shard |
 | 🖥️ **RMIT IT Admin / Server** | `sysadmin` | **0/3 Shards** | **Blind Storage** — sees only ciphertext; cannot decrypt or export |
 
 ---
@@ -141,13 +141,14 @@ Follow these 3 flows in the **Command Center** to test all security properties:
 
 ### 3️⃣ Flow 3: 3-of-3 Emergent Authority Quorum
 - **Where:** Switch to the **`Quorum & Dispute Panel`** tab.
-- **Action:** Based on Nhật Tân's breach log, assemble the **3-of-3 Key Shards**:
-  1. Click **"Khánh Linh: Co-Sign Approval"** *(Shard 1/3)*
-  2. Click **"Trung Quân: Co-Sign Approval"** *(Shard 2/3)*
-  3. Click **"Dr. Cường Thịnh: Revoke Nhật Tân & Co-Sign"** *(Arbitration Shard 3/3)*
+- **Anti-Collusion Guardrail:** Notice that Dr. Cường Thịnh's **Arbitration Shard 3/3** starts in a **`🔒 DORMANT (NO BREACH)`** state while Nhật Tân is in good standing—preventing two students and an advisor from colluding to exclude an innocent co-author.
+- **Action:** Once Nhật Tân's `403` breach is logged in the **Audit Trail**, assemble the **3-of-3 Threshold Key Shards**:
+  1. Click **"👩‍🔬 Khánh Linh: Sign Shard 1/3 (Co-Author Approval)"**
+  2. Click **"👨‍💻 Trung Quân: Sign Shard 2/3 (Co-Author Approval)"**
+  3. Click **"⚖️ Dr. Cường Thịnh: Revoke Nhật Tân & Sign Arbitration Shard 3/3"**
 - **Result:**
-  - ⚡ **Emergent Authority Activates:** Client-side decryption (`doDecrypt`) unlocks all 3 plaintexts in-memory.
-  - 📜 A cryptographically verifiable **Verified IP Release Certificate** is minted with consensus signatures.
+  - ⚡ **Emergent Authority Activates:** Client-side decryption (`doDecrypt`) reconstructs the Master Bundle key transiently in-browser and unlocks all 3 plaintexts.
+  - 📜 A cryptographically verifiable **Verified IP Release Certificate** is minted with consensus signatures and the permanent revocation record.
 
 ---
 

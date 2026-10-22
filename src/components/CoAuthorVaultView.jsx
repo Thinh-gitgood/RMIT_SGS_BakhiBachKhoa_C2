@@ -168,8 +168,9 @@ export default function CoAuthorVaultView({
                   </p>
                 ) : (
                   <p className="tier-content locked-note">
-                    Full export &amp; commercialization locked. {currentAuthor.name} holds
-                    only 1 of 3 shards—requires 3-of-3 Quorum signatures.
+                    Sealed by <b>3-of-3 Threshold Secret Sharing</b> across the joint
+                    Master Bundle (not 1 key per file). {currentAuthor.name} holds only 1
+                    of 3 cryptographic shares—full export requires 3/3 Quorum alignment.
                   </p>
                 )}
               </div>
