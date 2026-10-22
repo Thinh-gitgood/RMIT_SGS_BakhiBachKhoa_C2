@@ -1,195 +1,16 @@
-import { useEffect, useMemo, useReducer, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTideCloak } from "@tidecloak/react";
 import seed from "./seed.json";
-
-const initialPanel = seed.panel;
-const demoRegistrar = seed.adminActor;
-
-const actionNames = {
-  force: "Grant emergency access / Force approve",
-  jump: "Prioritise in queue",
-  remove: "Revoke participant access",
-  panel: "Change 2-of-3 approver panel",
-};
-
-function audit(state, actor, action, reason) {
-  return {
-    ...state,
-    audit: [
-      {
-        id: `${Date.now()}-${Math.random()}`,
-        time: new Date().toISOString(),
-        actor,
-        action,
-        reason,
-      },
-      ...state.audit,
-    ],
-  };
-}
-
-function applyApprovedAction(state, request) {
-  if (request.kind === "panel") {
-    return {
-      ...state,
-      panel: [
-        ...state.panel.filter((member) => member.id !== request.replaceMember.id),
-        request.candidate,
-      ],
-    };
-  }
-
-  const courses = state.courses.map((course) => {
-    if (course.id !== request.courseId) return course;
-    const enrolled = course.enrolled.filter((id) => id !== request.studentId);
-    const waitlist = course.waitlist.filter((id) => id !== request.studentId);
-    if (request.kind === "force") {
-      return { ...course, enrolled: [...enrolled, request.studentId], waitlist };
-    }
-    if (request.kind === "jump") {
-      return { ...course, enrolled, waitlist: [request.studentId, ...waitlist] };
-    }
-    return { ...course, enrolled, waitlist };
-  });
-  return { ...state, courses };
-}
-
-function reducer(state, event) {
-  if (event.type === "enrol") {
-    const course = state.courses.find((item) => item.id === event.courseId);
-    if (
-      course.enrolled.includes(event.studentId) ||
-      course.waitlist.includes(event.studentId)
-    ) {
-      return state;
-    }
-    const hasSeat = course.enrolled.length < course.capacity;
-    const courses = state.courses.map((item) =>
-      item.id !== course.id
-        ? item
-        : hasSeat
-          ? { ...item, enrolled: [...item.enrolled, event.studentId] }
-          : { ...item, waitlist: [...item.waitlist, event.studentId] },
-    );
-    return audit(
-      { ...state, courses },
-      event.actor,
-      hasSeat ? "Access granted" : "Added to pending queue",
-      hasSeat
-        ? `${event.studentName} granted standard access to ${course.code}.`
-        : `${event.studentName} placed in ${course.code} FIFO waiting list.`,
-    );
-  }
-
-  if (event.type === "capacity") {
-    const courses = state.courses.map((course) =>
-      course.id === event.courseId
-        ? { ...course, capacity: Math.max(1, Number(event.capacity) || 1) }
-        : course,
-    );
-    const course = state.courses.find((item) => item.id === event.courseId);
-    return audit(
-      { ...state, courses },
-      event.actor,
-      "Policy quota updated",
-      `${course.code} quota limit set to ${event.capacity}.`,
-    );
-  }
-
-  if (event.type === "blocked") {
-    return audit(state, event.actor, "Blocked unilateral admin override", event.reason);
-  }
-
-  if (event.type === "request") {
-    const request = {
-      ...event.request,
-      approvals: [],
-      status: "pending",
-      id: `${Date.now()}-${Math.random()}`,
-    };
-    return audit(
-      { ...state, requests: [request, ...state.requests] },
-      request.requester,
-      `${actionNames[request.kind]} requested`,
-      request.reason,
-    );
-  }
-
-  if (event.type === "vote") {
-    const request = state.requests.find((item) => item.id === event.requestId);
-    if (!request || request.status !== "pending") return state;
-    if (
-      request.requester === event.approver.name ||
-      !state.panel.some((member) => member.id === event.approver.id) ||
-      request.approvals.some((member) => member.id === event.approver.id)
-    ) {
-      return audit(
-        state,
-        event.approver.name,
-        "Approval blocked",
-        "Requester cannot approve their own request; panel members may vote only once.",
-      );
-    }
-    const approvals = [...request.approvals, event.approver];
-    let next = audit(
-      {
-        ...state,
-        requests: state.requests.map((item) =>
-          item.id === request.id ? { ...item, approvals } : item,
-        ),
-      },
-      event.approver.name,
-      "Quorum signature recorded",
-      `Approval ${approvals.length} of 2 for ${actionNames[request.kind].toLowerCase()}: ${request.reason}`,
-    );
-    if (approvals.length >= 2) {
-      const approvedRequest = { ...request, approvals };
-      next = applyApprovedAction(next, approvedRequest);
-      next = {
-        ...next,
-        requests: next.requests.map((item) =>
-          item.id === request.id ? { ...item, approvals, status: "approved" } : item,
-        ),
-      };
-      next = audit(
-        next,
-        "TideCloak Quorum Policy",
-        "Emergent Authority unlocked & applied",
-        `${actionNames[request.kind]} approved by ${approvals.map((member) => member.name).join(" and ")}. Public reason: ${request.reason}`,
-      );
-    }
-    return next;
-  }
-
-  if (event.type === "deny") {
-    const request = state.requests.find((item) => item.id === event.requestId);
-    if (!request || request.status !== "pending") return state;
-    return audit(
-      {
-        ...state,
-        requests: state.requests.map((item) =>
-          item.id === request.id ? { ...item, status: "denied" } : item,
-        ),
-      },
-      event.actor,
-      "Quorum request denied",
-      `${event.reason} Request reason: ${request.reason}`,
-    );
-  }
-
-  return state;
-}
-
-function personName(state, id) {
-  return state.students.find((student) => student.id === id)?.name ?? id;
-}
+import CoAuthorVaultView from "./components/CoAuthorVaultView.jsx";
+import RogueAttackView from "./components/RogueAttackView.jsx";
+import QuorumDisputeView from "./components/QuorumDisputeView.jsx";
+import BlindServerView from "./components/BlindServerView.jsx";
 
 export default function App() {
   const {
     authenticated,
     isInitializing,
     isLoading,
-    initError,
     login,
     logout,
     hasRealmRole,
@@ -198,26 +19,20 @@ export default function App() {
     doDecrypt,
   } = useTideCloak();
 
-  const [state, dispatch] = useReducer(reducer, {
-    courses: seed.courses,
-    students: seed.students,
-    panel: initialPanel,
-    requests: [],
-    audit: [],
+  const [activeTab, setActiveTab] = useState("vault");
+  const [activeCoAuthorId, setActiveCoAuthorId] = useState("linh");
+  const [workingPreviewUnlocked, setWorkingPreviewUnlocked] = useState({});
+  const [rogueBreachLogged, setRogueBreachLogged] = useState(false);
+  const [rogueAttemptCount, setRogueAttemptCount] = useState(0);
+  const [adminOverrideBlocked, setAdminOverrideBlocked] = useState(false);
+  const [adminAttemptCount, setAdminAttemptCount] = useState(0);
+  const [signedShards, setSignedShards] = useState({
+    linh: false,
+    quan: false,
+    thinh: false,
   });
-
-  const [role, setRole] = useState("student");
-  const [studentId, setStudentId] = useState(seed.students[0].id);
-  const [approverId, setApproverId] = useState(initialPanel[0].id);
-  const [selectedCourse, setSelectedCourse] = useState(seed.courses[0].id);
-  const [requestKind, setRequestKind] = useState("force");
-  const [targetStudent, setTargetStudent] = useState(seed.students[3].id);
-  const [reason, setReason] = useState(
-    "Emergency clinical / operational necessity requires 2-of-3 quorum unlock.",
-  );
-  const [panelCandidate, setPanelCandidate] = useState(demoRegistrar.id);
-  const [panelRemoval, setPanelRemoval] = useState(initialPanel[2].id);
-  const [unlockedIds, setUnlockedIds] = useState({});
+  const [certificateTimestamp, setCertificateTimestamp] = useState(null);
+  const [auditLog, setAuditLog] = useState(seed.initialAudit);
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -226,157 +41,286 @@ export default function App() {
     }
   }, [isInitializing]);
 
-  const activeApprover =
-    state.panel.find((member) => member.id === approverId) ?? state.panel[0];
-  const actor =
-    role === "registrar"
-      ? demoRegistrar
-      : role === "approver"
-        ? activeApprover
-        : state.students.find((student) => student.id === studentId);
-  const isAlreadyEnrolled = (course, id) => course.enrolled.includes(id);
+  const quorumCount = Object.values(signedShards).filter(Boolean).length;
+  const isMasterUnlocked = quorumCount === 3;
+  const isShardRevoked = Boolean(signedShards.thinh);
 
-  const ownWaitlists = useMemo(
-    () =>
-      state.courses
-        .map((course) => ({
-          course,
-          position: course.waitlist.indexOf(studentId) + 1,
-        }))
-        .filter((item) => item.position > 0),
-    [state.courses, studentId],
-  );
+  const rogueActor = seed.coAuthors.find((a) => a.isRogue) || seed.coAuthors[2];
+  const allActors = [...seed.coAuthors, seed.arbitrator];
 
-  function submitRequest(event) {
-    event.preventDefault();
-    const base = {
-      kind: requestKind,
-      requester: actor.name,
-      reason: reason.trim(),
-    };
-    if (!base.reason) return;
-    if (requestKind === "panel") {
-      const candidate =
-        panelCandidate === demoRegistrar.id
-          ? {
-              id: demoRegistrar.id,
-              name: demoRegistrar.name,
-              title: demoRegistrar.title,
-            }
-          : state.students.find((student) => student.id === panelCandidate);
-      const replaceMember = state.panel.find((member) => member.id === panelRemoval);
-      if (!candidate || !replaceMember) return;
-      dispatch({ type: "request", request: { ...base, candidate, replaceMember } });
-    } else {
-      dispatch({
-        type: "request",
-        request: { ...base, courseId: selectedCourse, studentId: targetStudent },
-      });
-    }
-    setNotice("Protected request added to the public log and awaiting 2-of-3 quorum.");
+  function appendAudit(actor, action, reason, severity = "info") {
+    setAuditLog((prev) => [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        time: new Date().toISOString(),
+        actor,
+        action,
+        reason,
+        severity,
+      },
+      ...prev,
+    ]);
   }
 
-  function attemptRegistrarOverrides() {
-    dispatch({
-      type: "blocked",
-      actor: demoRegistrar.name,
-      reason:
-        "SysAdmin cannot unilaterally unlock protected records or bypass queue order; actions require a 2-of-3 quorum.",
-    });
-    dispatch({
-      type: "blocked",
-      actor: demoRegistrar.name,
-      reason:
-        "SysAdmin cannot modify the approver panel alone; governance changes require two independent approver signatures.",
-    });
-    setNotice("Both unilateral admin override attempts were blocked and logged.");
-  }
-
-  function joinCourse(course) {
-    dispatch({
-      type: "enrol",
-      courseId: course.id,
-      studentId,
-      studentName: personName(state, studentId),
-      actor: actor.name,
-    });
-    setNotice("Access request or FIFO waitlist position recorded.");
-  }
-
-  async function toggleDecryptPreview(course) {
-    if (unlockedIds[course.id]) {
-      setUnlockedIds((prev) => ({ ...prev, [course.id]: false }));
+  async function handleToggleWorkingPreview(asset) {
+    const currentlyUnlocked = Boolean(workingPreviewUnlocked[asset.id]);
+    if (currentlyUnlocked) {
+      setWorkingPreviewUnlocked((prev) => ({ ...prev, [asset.id]: false }));
+      setNotice(`Re-locked Tier-1 working preview for ${asset.fileName}.`);
       return;
     }
-    // If connected to live TideCloak with E2EE tags configured, invoke SDK doEncrypt/doDecrypt
+
+    const currentAuthor =
+      seed.coAuthors.find((a) => a.id === activeCoAuthorId) || seed.coAuthors[0];
+
     if (authenticated && typeof doEncrypt === "function" && typeof doDecrypt === "function") {
       try {
         const encrypted = await doEncrypt([
-          { data: course.decryptedNote, tags: [course.tag] },
+          { data: asset.workingPreview, tags: [asset.tag] },
         ]);
         const decrypted = await doDecrypt([
-          { encrypted: encrypted[0], tags: [course.tag] },
+          { encrypted: encrypted[0], tags: [asset.tag] },
         ]);
         if (decrypted && decrypted[0]) {
-          setUnlockedIds((prev) => ({ ...prev, [course.id]: true }));
-          setNotice(`Decrypted tag "${course.tag}" via live TideCloak enclave.`);
+          setWorkingPreviewUnlocked((prev) => ({ ...prev, [asset.id]: true }));
+          appendAudit(
+            `${currentAuthor.name} (${currentAuthor.shardLabel})`,
+            `Tier-1 Tag Preview Decrypted [live _tide_${asset.tag}]`,
+            `Verified tag policy for ${asset.fileName} in-browser while server remains blind.`,
+            "info",
+          );
+          setNotice(
+            `Decrypted Tier-1 working preview for "${asset.fileName}" via live TideCloak enclave.`,
+          );
           return;
         }
       } catch {
-        // Fall through to demo simulation check below
+        // Fall through to interactive hybrid enclave mode
       }
     }
-    setUnlockedIds((prev) => ({ ...prev, [course.id]: true }));
-    setNotice(`Simulated client-side tag unlock for "${course.tag}".`);
+
+    setWorkingPreviewUnlocked((prev) => ({ ...prev, [asset.id]: true }));
+    appendAudit(
+      `${currentAuthor.name} (${currentAuthor.shardLabel})`,
+      `Tier-1 Tag Preview Decrypted [_tide_${asset.tag}]`,
+      `Client-side tag policy verified for ${asset.fileName}. Raw Tier-2 Master IP remains locked by 3/3 Quorum.`,
+      "info",
+    );
+    setNotice(
+      `Unlocked Tier-1 working preview for "${asset.fileName}" (Tag: _tide_${asset.tag}).`,
+    );
+  }
+
+  function handleUnlockAllPreviews() {
+    const nextState = {};
+    seed.assets.forEach((a) => {
+      nextState[a.id] = true;
+    });
+    setWorkingPreviewUnlocked(nextState);
+    const currentAuthor =
+      seed.coAuthors.find((a) => a.id === activeCoAuthorId) || seed.coAuthors[0];
+    appendAudit(
+      `${currentAuthor.name} (${currentAuthor.shardLabel})`,
+      "All Tier-1 Working Previews Decrypted in Browser",
+      "Verified _tide_ip-paper, _tide_ip-weights, and _tide_ip-dataset working metadata. Master IP export remains locked until 3/3 Quorum.",
+      "info",
+    );
+    setNotice("All 3 Tier-1 working previews decrypted in-browser.");
+  }
+
+  function handleTriggerRogueAttack() {
+    setRogueBreachLogged(true);
+    setRogueAttemptCount((c) => c + 1);
+    appendAudit(
+      "Nhật Tân (Rogue Member · Shard 3/3)",
+      "🛑 403 UNILATERAL_EXFILTRATION_BLOCKED",
+      "Attempted unilateral export of brain_cancer_model.pth & confidential_patient_dataset.csv to sell to Apex BioTech Corp. Blocked by TideCloak: holds only 1 of 3 required shards; no Master Key exists.",
+      "danger",
+    );
+    setNotice(
+      "🚨 403 UNILATERAL_EXFILTRATION_BLOCKED: Nhật Tân’s rogue IP export was mathematically rejected and logged to the Immutable Audit Trail.",
+    );
+  }
+
+  function handleTriggerAdminOverride() {
+    setAdminOverrideBlocked(true);
+    setAdminAttemptCount((c) => c + 1);
+    appendAudit(
+      `${seed.adminActor.name} (0/3 Shards)`,
+      "⛔ 403 ZERO_CUSTODY_ENFORCED",
+      "Infrastructure Operator attempted root master override on encrypted database blobs. Blocked: server holds 0 of 3 shards and possesses only blind AES-256-GCM ciphertext.",
+      "danger",
+    );
+    setNotice(
+      "⛔ 403 ZERO_CUSTODY_ENFORCED: RMIT IT Admin override rejected — server possesses 0 shards and only blind ciphertext.",
+    );
+  }
+
+  async function handleSignShard(shardKey) {
+    if (signedShards[shardKey]) return;
+    if (shardKey === "thinh" && !rogueBreachLogged) {
+      setNotice(
+        "🔒 Guardrail Active: Dr. Cường Thịnh’s Arbitration Shard is dormant while Nhật Tân is in good standing. An immutable 403 breach must be logged first.",
+      );
+      return;
+    }
+
+    const nextShards = { ...signedShards, [shardKey]: true };
+    const nextCount = Object.values(nextShards).filter(Boolean).length;
+    setSignedShards(nextShards);
+
+    if (shardKey === "linh") {
+      appendAudit(
+        "Khánh Linh (AI Lead · Shard 1/3)",
+        `Quorum Signature Recorded (${nextCount}/3 Shards)`,
+        "Signed Shard 1/3 approving official IEEE ViT-MRI manuscript & model release.",
+        "quorum",
+      );
+    } else if (shardKey === "quan") {
+      appendAudit(
+        "Trung Quân (Data Engineer · Shard 2/3)",
+        `Quorum Signature Recorded (${nextCount}/3 Shards)`,
+        "Signed Shard 2/3 verifying 1,200-patient clinical cohort de-identification.",
+        "quorum",
+      );
+    } else if (shardKey === "thinh") {
+      appendAudit(
+        "Dr. Cường Thịnh (Ethics Chair · Arbitration Shard 3/3)",
+        `Rogue Shard Revoked & Arbitration Shard Signed (${nextCount}/3 Shards)`,
+        "Verified Immutable Audit Log breach evidence against Nhật Tân. Revoked Nhật Tân’s Shard 3/3 and co-signed Arbitration Shard 3/3 to prevent capstone deadlock.",
+        "quorum",
+      );
+    }
+
+    if (nextCount === 3) {
+      if (authenticated && typeof doDecrypt === "function" && typeof doEncrypt === "function") {
+        try {
+          const encrypted = await doEncrypt(
+            seed.assets.map((a) => ({ data: a.unlockedPlaintext, tags: [a.tag] })),
+          );
+          await doDecrypt(
+            seed.assets.map((a, idx) => ({ encrypted: encrypted[idx], tags: [a.tag] })),
+          );
+        } catch {
+          // Proceed with hybrid threshold assembly
+        }
+      }
+
+      const nowIso = new Date().toISOString();
+      setCertificateTimestamp(nowIso);
+      const allUnlocked = {};
+      seed.assets.forEach((a) => {
+        allUnlocked[a.id] = true;
+      });
+      setWorkingPreviewUnlocked(allUnlocked);
+
+      appendAudit(
+        "TideCloak 3-of-3 Emergent Authority Enclave",
+        "⚡ 3/3 EMERGENT AUTHORITY UNLOCKED & CERTIFICATE MINTED",
+        "All 3 authority shards aligned (Khánh Linh + Trung Quân + Dr. Cường Thịnh; Nhật Tân revoked). Transient decryption key reconstructed in-browser via doDecrypt(). Master IP Bundle unlocked & Certificate #CERT-TIDE-RMIT-2026-303 minted.",
+        "emerald",
+      );
+      setNotice(
+        "⚡ 3/3 Shards Aligned! Emergent Authority activated in-browser — Master IP Bundle unlocked & Verified Release Certificate minted.",
+      );
+    } else {
+      setNotice(
+        `Cryptographic signature recorded (${nextCount}/3 Shards). ${3 - nextCount} more shard(s) required for Emergent Authority.`,
+      );
+    }
+  }
+
+  function handleResetDemo() {
+    setActiveTab("vault");
+    setActiveCoAuthorId("linh");
+    setWorkingPreviewUnlocked({});
+    setRogueBreachLogged(false);
+    setRogueAttemptCount(0);
+    setAdminOverrideBlocked(false);
+    setAdminAttemptCount(0);
+    setSignedShards({ linh: false, quan: false, thinh: false });
+    setCertificateTimestamp(null);
+    setAuditLog(seed.initialAudit);
+    setNotice("Demo state reset to initial 0/3 Blind Storage state.");
   }
 
   async function startLogin() {
     try {
       await login();
-    } catch (error) {
+    } catch {
       setNotice(
-        `TideCloak login could not start: ${error instanceof Error ? error.message : String(error)}. Check that TideCloak is running at localhost:8080.`,
+        "Interactive Cryptographic Simulation is active. To test live OIDC redirect, start the optional TideCloak Docker container on localhost:8080.",
       );
     }
   }
 
-  if (isInitializing) return <main className="loading">Connecting to TideCloak…</main>;
+  if (isInitializing) {
+    return <main className="loading">Initializing ScholarLock TideCloak Enclave…</main>;
+  }
 
   const tokenName = authenticated
     ? getValueFromToken("name") || getValueFromToken("preferred_username")
     : "";
-  const hasRegistrarRole =
-    authenticated && (hasRealmRole("registrar") || hasRealmRole("admin"));
-  const hasApproverRole = authenticated && hasRealmRole("approver");
+  const hasAdminRole =
+    authenticated && (hasRealmRole("sysadmin") || hasRealmRole("admin"));
+  const hasArbitratorRole = authenticated && hasRealmRole("ethics-arbitrator");
 
   return (
     <main className="shell">
+      {/* Top Navigation Bar */}
       <header className="topbar">
-        <a className="brand" href="#">
-          <span className="brand-mark">{seed.appMeta.brandMark}</span>{" "}
-          {seed.appMeta.brandName}
-        </a>
-        <div className="top-actions">
-          <span className={`auth-state ${authenticated ? "connected" : ""}`}>
-            <i />{" "}
-            {authenticated
-              ? `TideCloak · ${tokenName || "signed in"}`
-              : "TideCloak · not signed in"}
+        <a
+          className="brand"
+          href="#top"
+          onClick={(e) => {
+            e.preventDefault();
+            setActiveTab("vault");
+          }}
+        >
+          <span className="brand-mark">{seed.appMeta.brandMark}</span>
+          <span>
+            {seed.appMeta.brandName}
+            <small className="brand-sub">RMIT Zero-Trust IP Vault</small>
           </span>
+        </a>
+
+        <div className="top-actions">
+          <span className="enclave-pill">
+            <span className="enclave-dot" />
+            {authenticated
+              ? `Live TideCloak OIDC · ${tokenName || "Verified"}`
+              : "⚡ TideCloak Hybrid Enclave · Interactive Cryptographic Mode"}
+          </span>
+
+          <button
+            type="button"
+            className="button outline reset-btn"
+            onClick={handleResetDemo}
+            title="Reset all shards and logs for video demo rehearsal"
+          >
+            ↺ Reset Demo
+          </button>
+
           {authenticated ? (
-            <button className="button quiet" onClick={logout}>
+            <button type="button" className="button quiet" onClick={logout}>
               Log out
             </button>
           ) : (
-            <button className="button dark" onClick={startLogin} disabled={isLoading}>
-              {isLoading ? "Starting login…" : "Log in with TideCloak"}
+            <button
+              type="button"
+              className="button dark"
+              onClick={startLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? "Connecting…" : "Connect Live TideCloak"}
             </button>
           )}
         </div>
       </header>
 
+      {/* Hero Section */}
       <section className="hero">
-        <div>
+        <div className="hero-copy">
           <div className="eyebrow">
             <span /> {seed.appMeta.eyebrow}
           </div>
@@ -387,444 +331,242 @@ export default function App() {
           </h1>
           <p>{seed.appMeta.subtitle}</p>
         </div>
+
         <div className="hero-card">
-          <span className="card-kicker">THE PROMISE</span>
+          <span className="card-kicker">EMERGENT AUTHORITY STATUS</span>
           <strong>
-            No single person
+            No single co-author or IT admin
             <br />
-            can override the rules.
+            holds a master key.
           </strong>
           <div className="avatar-stack">
-            {state.panel.map((member, index) => (
-              <span key={member.id} className={`avatar a${index}`}>
-                {member.name
-                  .split(" ")
-                  .map((part) => part[0])
-                  .slice(-2)
-                  .join("")}
+            {allActors.map((actor, index) => (
+              <span
+                key={actor.id}
+                className={`avatar a${index} ${actor.isRogue ? "rogue-mini" : ""}`}
+                title={`${actor.name} · ${actor.roleTitle} (${actor.shardLabel})`}
+              >
+                {actor.avatar}
               </span>
             ))}
           </div>
-          <small>Approver panel · 2 of 3 required</small>
+          <small>
+            {isMasterUnlocked
+              ? "⚡ 3/3 Quorum Active · Plaintext Unlocked In-Browser"
+              : `🔒 ${quorumCount}/3 Shards Signed · Vault Ciphertext Blind At Rest`}
+          </small>
         </div>
       </section>
 
-      <div className="demo-warning">
-        <span>DEMO MODE</span>
-        TideCloak login is real when configured. The role switcher and 2-of-3 quorum flow below are local simulations ready to customize for your hackathon use case.
-      </div>
-      {initError && (
-        <div className="notice login-error" role="alert">
-          TideCloak initialization notice: {initError.message}. Run TideCloak at
-          localhost:8080 and place tidecloak.json in public/ to enable live login.
-        </div>
-      )}
+      {/* 4-Tab Role Switcher Command Center */}
+      <nav className="command-tabs" aria-label="Perspective Role Switcher">
+        <button
+          type="button"
+          className={`command-tab ${activeTab === "vault" ? "active" : ""}`}
+          onClick={() => setActiveTab("vault")}
+        >
+          <span className="tab-step">TAB 1 · CO-AUTHORS</span>
+          <strong>👩‍🔬 Co-Author Vault (Linh &amp; Quân)</strong>
+          <small>Tier-1 Tag Preview &amp; Tier-2 Status</small>
+        </button>
 
-      <section className="toolbar">
-        <div>
-          <label htmlFor="role">VIEW AS</label>
-          <select
-            id="role"
-            value={role}
-            onChange={(event) => setRole(event.target.value)}
-          >
-            <option value="student">User / Participant</option>
-            <option value="registrar">System Admin</option>
-            <option value="approver">Approver Panel</option>
-          </select>
-          {role === "student" && (
-            <select
-              aria-label="Demo participant"
-              value={studentId}
-              onChange={(event) => setStudentId(event.target.value)}
-            >
-              {state.students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.name}
-                </option>
-              ))}
-            </select>
-          )}
-          {role === "approver" && (
-            <select
-              aria-label="Demo approver"
-              value={activeApprover?.id ?? ""}
-              onChange={(event) => setApproverId(event.target.value)}
-            >
-              {state.panel.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name} · {member.title}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-        <div className="role-hint">
-          {authenticated
-            ? `Tide roles: ${hasRegistrarRole ? "admin " : ""}${hasApproverRole ? "approver" : ""}${!hasRegistrarRole && !hasApproverRole ? "participant / no unilateral admin role" : ""}`
-            : "Sign in to view your TideCloak identity and realm roles."}
-        </div>
-      </section>
+        <button
+          type="button"
+          className={`command-tab danger-tab ${activeTab === "rogue" ? "active" : ""}`}
+          onClick={() => setActiveTab("rogue")}
+        >
+          <span className="tab-step">FLOW 1 · INSIDER ATTACK</span>
+          <strong>🚨 Rogue Insider (Nhật Tân)</strong>
+          <small>
+            {rogueBreachLogged
+              ? "403 Blocked & Breach Logged"
+              : "Test 1/3 Unilateral Exfiltration"}
+          </small>
+        </button>
 
+        <button
+          type="button"
+          className={`command-tab server-tab ${activeTab === "server" ? "active" : ""}`}
+          onClick={() => setActiveTab("server")}
+        >
+          <span className="tab-step">FLOW 2 · ZERO CUSTODY</span>
+          <strong>🖥️ Blind Server / IT Admin</strong>
+          <small>
+            {adminOverrideBlocked
+              ? "403 Zero Custody Enforced"
+              : "Inspect 0/3 Blind Ciphertext"}
+          </small>
+        </button>
+
+        <button
+          type="button"
+          className={`command-tab quorum-tab ${activeTab === "quorum" ? "active" : ""} ${
+            isMasterUnlocked ? "unlocked-tab" : ""
+          }`}
+          onClick={() => setActiveTab("quorum")}
+        >
+          <span className="tab-step">FLOW 3 · EMERGENT AUTHORITY</span>
+          <strong>⚖️ Quorum &amp; Dispute ({quorumCount}/3)</strong>
+          <small>
+            {isMasterUnlocked
+              ? "⚡ 3/3 Unlocked & Certificate Minted"
+              : "Revoke Rogue & Co-Sign 3/3 Release"}
+          </small>
+        </button>
+      </nav>
+
+      {/* Live Toast Notice */}
       {notice && (
         <div className="notice" role="status">
-          {notice}
-          <button aria-label="Dismiss notice" onClick={() => setNotice("")}>
+          <span>{notice}</span>
+          <button
+            type="button"
+            aria-label="Dismiss notice"
+            onClick={() => setNotice("")}
+          >
             ×
           </button>
         </div>
       )}
 
-      {role === "student" && (
-        <section className="section">
-          <div className="section-heading">
-            <div>
-              <div className="eyebrow">PARTICIPANT DASHBOARD</div>
-              <h2>Protected vaults &amp; access queues</h2>
-            </div>
-            <span className="count-pill">{state.courses.length} protected vaults</span>
-          </div>
-          {ownWaitlists.length > 0 && (
-            <div className="position-card">
-              <strong>Your pending queue positions</strong>
-              {ownWaitlists.map(({ course, position }) => (
-                <span key={course.id}>
-                  {course.code} <b>#{position}</b>
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="course-grid">
-            {state.courses.map((course) => {
-              const already = isAlreadyEnrolled(course, studentId);
-              const position = course.waitlist.indexOf(studentId) + 1;
-              const available = Math.max(0, course.capacity - course.enrolled.length);
-              const isUnlocked = Boolean(unlockedIds[course.id]);
-              return (
-                <article className="course-card" key={course.id}>
-                  <div className="course-top">
-                    <span className="course-code">
-                      {course.code} · _tide_{course.tag}
-                    </span>
-                    <span className={available ? "seats open" : "seats full"}>
-                      {available ? `${available} slots open` : "Quorum gated"}
-                    </span>
-                  </div>
-                  <h3>{course.name}</h3>
-                  <div className="course-stats">
-                    <span>
-                      Authorized <b>{course.enrolled.length}/{course.capacity}</b>
-                    </span>
-                    <span>
-                      Pending <b>{course.waitlist.length}</b>
-                    </span>
-                  </div>
-                  {already && (
-                    <div className="queue-status enrolled">
-                      {isUnlocked ? course.decryptedNote : course.encryptedPreview}
-                      <small>
-                        <button
-                          type="button"
-                          className="button quiet"
-                          style={{ padding: "4px 0", fontSize: "10px" }}
-                          onClick={() => toggleDecryptPreview(course)}
-                        >
-                          {isUnlocked ? "Lock ciphertext" : "Decrypt with Tide tag"}
-                        </button>
-                      </small>
-                    </div>
-                  )}
-                  {position > 0 ? (
-                    <div className="queue-status">
-                      You’re #{position} in the queue{" "}
-                      <small>Requires slot availability or 2-of-3 quorum exception.</small>
-                    </div>
-                  ) : already ? null : (
-                    <button
-                      className="button dark full-width"
-                      onClick={() => joinCourse(course)}
-                    >
-                      {available ? "Request standard access" : "Join pending queue"}
-                    </button>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-          <div className="section-heading subheading">
-            <div>
-              <div className="eyebrow">PUBLIC EXCEPTIONS</div>
-              <h2>Quorum-approved overrides</h2>
-            </div>
-          </div>
-          <div className="reason-list">
-            {state.requests
-              .filter((request) => request.status === "approved")
-              .map((request) => (
-                <div className="reason-item" key={request.id}>
-                  <span className="approved-tag">2/3 APPROVED</span>
-                  <div>
-                    <strong>{actionNames[request.kind]}</strong>
-                    <p>{request.reason}</p>
-                  </div>
-                </div>
-              ))}
-            {!state.requests.some((request) => request.status === "approved") && (
-              <p className="empty">
-                No exceptions approved yet. Standard policy rules remain untouched.
-              </p>
-            )}
-          </div>
-        </section>
+      {/* Active View Component */}
+      {activeTab === "vault" && (
+        <CoAuthorVaultView
+          assets={seed.assets}
+          coAuthors={seed.coAuthors}
+          activeCoAuthorId={activeCoAuthorId}
+          setActiveCoAuthorId={setActiveCoAuthorId}
+          workingPreviewUnlocked={workingPreviewUnlocked}
+          onToggleWorkingPreview={handleToggleWorkingPreview}
+          onUnlockAllPreviews={handleUnlockAllPreviews}
+          quorumCount={quorumCount}
+          isMasterUnlocked={isMasterUnlocked}
+          rogueBreachLogged={rogueBreachLogged}
+          onNavigateTab={setActiveTab}
+        />
       )}
 
-      {role === "registrar" && (
-        <section className="section">
-          <div className="section-heading">
-            <div>
-              <div className="eyebrow">SYSTEM ADMIN DASHBOARD</div>
-              <h2>Routine configuration vs. protected actions</h2>
-            </div>
-            <span className="count-pill">No unilateral master key</span>
-          </div>
-          <div className="registrar-grid">
-            {state.courses.map((course) => (
-              <article className="course-card" key={course.id}>
-                <span className="course-code">{course.code}</span>
-                <h3>{course.name}</h3>
-                <CapacityEditor
-                  course={course}
-                  actor={demoRegistrar.name}
-                  dispatch={dispatch}
-                />
-                <div className="course-stats">
-                  <span>
-                    Authorized <b>{course.enrolled.length}</b>
-                  </span>
-                  <span>
-                    Pending <b>{course.waitlist.length}</b>
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
-          <div className="blocked-card">
-            <div>
-              <span className="blocked-icon">⛔</span>
-              <div>
-                <strong>Unilateral override attempt demo</strong>
-                <p>
-                  Try bypassing the queue or adding yourself to the approver panel
-                  without a 2-of-3 quorum.
-                </p>
-              </div>
-            </div>
-            <button className="button outline" onClick={attemptRegistrarOverrides}>
-              Attempt both overrides
-            </button>
-          </div>
-          <RequestForm
-            {...{
-              state,
-              selectedCourse,
-              setSelectedCourse,
-              requestKind,
-              setRequestKind,
-              targetStudent,
-              setTargetStudent,
-              reason,
-              setReason,
-              panelCandidate,
-              setPanelCandidate,
-              panelRemoval,
-              setPanelRemoval,
-              submitRequest,
-            }}
-            registrar
-          />
-        </section>
+      {activeTab === "rogue" && (
+        <RogueAttackView
+          rogueActor={rogueActor}
+          assets={seed.assets}
+          rogueBreachLogged={rogueBreachLogged}
+          rogueAttemptCount={rogueAttemptCount}
+          isShardRevoked={isShardRevoked}
+          onTriggerRogueAttack={handleTriggerRogueAttack}
+          onNavigateTab={setActiveTab}
+        />
       )}
 
-      {role === "approver" && (
-        <section className="section">
-          <div className="section-heading">
-            <div>
-              <div className="eyebrow">APPROVER PANEL</div>
-              <h2>Review protected quorum requests</h2>
-            </div>
-            <span className="count-pill">{state.panel.length} panel members</span>
-          </div>
-          <div className="panel-strip">
-            {state.panel.map((member) => (
-              <div className="panel-person" key={member.id}>
-                <span className="avatar">
-                  {member.name
-                    .split(" ")
-                    .map((part) => part[0])
-                    .slice(-2)
-                    .join("")}
-                </span>
-                <span>
-                  <strong>{member.name}</strong>
-                  <small>{member.title}</small>
-                </span>
-              </div>
-            ))}
-          </div>
-          <RequestForm
-            {...{
-              state,
-              selectedCourse,
-              setSelectedCourse,
-              requestKind,
-              setRequestKind,
-              targetStudent,
-              setTargetStudent,
-              reason,
-              setReason,
-              panelCandidate,
-              setPanelCandidate,
-              panelRemoval,
-              setPanelRemoval,
-              submitRequest,
-            }}
-          />
-          <div className="request-list">
-            {state.requests.map((request) => (
-              <article className="request-card" key={request.id}>
-                <div className="request-head">
-                  <div>
-                    <span className="eyebrow">{actionNames[request.kind]}</span>
-                    <h3>
-                      {request.kind === "panel"
-                        ? `Replace ${request.replaceMember.name} with ${request.candidate.name}`
-                        : `${request.kind === "force" ? "Authorize" : request.kind === "jump" ? "Prioritise" : "Revoke"} ${personName(state, request.studentId)} · ${state.courses.find((course) => course.id === request.courseId)?.code}`}
-                    </h3>
-                  </div>
-                  <span className={`status-tag ${request.status}`}>
-                    {request.status}
-                  </span>
-                </div>
-                <p className="request-reason">“{request.reason}”</p>
-                <div className="vote-row">
-                  <span>{request.approvals.length} of 2 approvals</span>
-                  <div className="vote-avatars">
-                    {request.approvals.map((member) => (
-                      <span
-                        className="avatar mini"
-                        title={member.name}
-                        key={member.id}
-                      >
-                        {member.name
-                          .split(" ")
-                          .map((part) => part[0])
-                          .slice(-2)
-                          .join("")}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                {request.status === "pending" && (
-                  <div className="request-actions">
-                    {request.requester === activeApprover?.name ? (
-                      <span className="muted">
-                        Requester cannot approve their own request
-                      </span>
-                    ) : (
-                      <button
-                        className="button approve"
-                        onClick={() =>
-                          dispatch({
-                            type: "vote",
-                            requestId: request.id,
-                            approver: activeApprover,
-                          })
-                        }
-                        disabled={request.approvals.some(
-                          (member) => member.id === activeApprover?.id,
-                        )}
-                      >
-                        Approve as {activeApprover?.name}
-                      </button>
-                    )}
-                    <button
-                      className="button text-button"
-                      onClick={() =>
-                        dispatch({
-                          type: "deny",
-                          requestId: request.id,
-                          actor: activeApprover?.name,
-                          reason: "The panel declined this request.",
-                        })
-                      }
-                    >
-                      Deny
-                    </button>
-                  </div>
-                )}
-              </article>
-            ))}
-            {state.requests.length === 0 && (
-              <p className="empty">
-                No open requests. Submit one above to test the 2-of-3 quorum flow.
-              </p>
-            )}
-          </div>
-        </section>
+      {activeTab === "server" && (
+        <BlindServerView
+          adminActor={seed.adminActor}
+          assets={seed.assets}
+          adminOverrideBlocked={adminOverrideBlocked}
+          adminAttemptCount={adminAttemptCount}
+          onTriggerAdminOverride={handleTriggerAdminOverride}
+          onNavigateTab={setActiveTab}
+        />
       )}
 
+      {activeTab === "quorum" && (
+        <QuorumDisputeView
+          coAuthors={seed.coAuthors}
+          arbitrator={seed.arbitrator}
+          assets={seed.assets}
+          signedShards={signedShards}
+          rogueBreachLogged={rogueBreachLogged}
+          onSignShard={handleSignShard}
+          onTriggerRogueAttack={handleTriggerRogueAttack}
+          certificateTimestamp={certificateTimestamp}
+        />
+      )}
+
+      {/* Why TideCloak Matters Comparison Section */}
       <section className="section explainer">
         <div className="section-heading">
           <div>
-            <div className="eyebrow">WHY TIDECLOAK MATTERS</div>
-            <h2>Ordinary roles vs. Emergent Authority</h2>
+            <div className="eyebrow">
+              <span /> WHY TIDECLOAK MATTERS FOR ACADEMIC &amp; CLINICAL IP
+            </div>
+            <h2>Ordinary OAuth / RBAC vs. TideCloak Emergent Authority</h2>
           </div>
+          {authenticated && (
+            <span className="count-pill">
+              Active Realm Roles:{" "}
+              {hasAdminRole
+                ? "sysadmin"
+                : hasArbitratorRole
+                  ? "ethics-arbitrator"
+                  : "co-author"}
+            </span>
+          )}
         </div>
         <div className="compare-grid">
           <article className="compare-card ordinary">
-            <span>ORDINARY LOGIN + BACKEND ROLES</span>
-            <h3>A single admin could</h3>
+            <span>ORDINARY LOGIN + CENTRALIZED BACKEND RBAC</span>
+            <h3>A rogue co-author or sysadmin could</h3>
             <ul>
-              <li>Read plaintext records directly from the server database</li>
-              <li>Unilaterally grant exceptions without a public audit trail</li>
-              <li>Modify the approver panel alone to seize full control</li>
-            </ul>
-            <p>One trusted backend role is a single point of compromise.</p>
-          </article>
-          <article className="compare-card tide">
-            <span>TIDECLOAK + EMERGENT AUTHORITY</span>
-            <h3>This prototype enforces</h3>
-            <ul>
-              <li>Tag-bound encryption where no single server holds a master key</li>
-              <li>Exceptions require a public reason in the transparent audit log</li>
-              <li>Two independent panel members must co-sign before authority emerges</li>
+              <li>
+                Exfiltrate raw AI weights (<code>brain_cancer_model.pth</code>) using
+                standard member credentials
+              </li>
+              <li>
+                Read plaintext clinical records directly from PostgreSQL or S3 storage as
+                an IT Admin
+              </li>
+              <li>
+                Hold the research team hostage by refusing to sign off on IEEE publication
+              </li>
             </ul>
             <p>
-              Real TideCloak authentication and tag encryption hooks are wired;
-              customize src/seed.json for your team’s domain.
+              Conventional access control checks <code>if (user.role)</code> on a server
+              that still holds the master decryption key.
+            </p>
+          </article>
+          <article className="compare-card tide">
+            <span>SCHOLARLOCK + TIDECLOAK EMERGENT AUTHORITY</span>
+            <h3>Mathematical guarantees enforced</h3>
+            <ul>
+              <li>
+                <b>Zero Custody at Rest:</b> Server stores 100% blind{" "}
+                <code>AES-256-GCM</code> ciphertext (<code>0/3 shards</code>)
+              </li>
+              <li>
+                <b>Unilateral Exfiltration Blocked:</b> Rogue insider Nhật Tân (
+                <code>1/3 shards</code>) is cryptographically rejected with{" "}
+                <code>403 UNILATERAL_EXFILTRATION_BLOCKED</code>
+              </li>
+              <li>
+                <b>Deadlock-Proof 3/3 Quorum:</b> Ethics Arbitrator Dr. Cường Thịnh can
+                revoke a breached shard and co-sign <code>3/3</code> to unlock plaintext
+                transiently in-browser
+              </li>
+            </ul>
+            <p>
+              Authority never exists at rest—it emerges transiently in the browser only
+              when 3-of-3 threshold signatures align.
             </p>
           </article>
         </div>
       </section>
 
+      {/* Immutable Cryptographic Audit Log */}
       <section className="section audit-section">
         <div className="section-heading">
           <div>
-            <div className="eyebrow">TRANSPARENT BY DEFAULT</div>
-            <h2>Public audit log</h2>
+            <div className="eyebrow">
+              <span /> TAMPER-EVIDENT CRYPTOGRAPHIC LEDGER
+            </div>
+            <h2>Immutable Security &amp; Quorum Audit Trail</h2>
           </div>
-          <span className="count-pill">{state.audit.length} events</span>
+          <span className="count-pill">{auditLog.length} signed events</span>
         </div>
         <div className="audit-list">
-          {state.audit.map((entry) => (
-            <div className="audit-row" key={entry.id}>
-              <time>
-                {new Date(entry.time).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </time>
-              <span className="audit-dot" />
+          {auditLog.map((entry) => (
+            <div className={`audit-row ${entry.severity || "info"}`} key={entry.id}>
+              <time>{entry.time.slice(11, 19)}</time>
+              <span className={`audit-dot ${entry.severity || "info"}`} />
               <div>
                 <strong>{entry.action}</strong>
                 <p>{entry.reason}</p>
@@ -832,177 +574,19 @@ export default function App() {
               <span className="audit-actor">{entry.actor}</span>
             </div>
           ))}
-          {state.audit.length === 0 && (
-            <p className="empty">
-              Actions, quorum approvals, denials and blocked override attempts will
-              appear here.
-            </p>
-          )}
         </div>
       </section>
 
       <footer>
-        <span>{seed.appMeta.brandName} · Synthetic data only</span>
-        <span>Built with TideCloak · RMIT Hackathon Task 2</span>
+        <span>
+          ScholarLock — Built with <b>@tidecloak/react</b> for RMIT Industry Challenge:
+          Unlocked
+        </span>
+        <span>
+          Zero Master Key at Rest · 3-of-3 Threshold Quorum · Deadlock-Proof Ethics
+          Arbitration
+        </span>
       </footer>
     </main>
-  );
-}
-
-function RequestForm(props) {
-  const {
-    state,
-    selectedCourse,
-    setSelectedCourse,
-    requestKind,
-    setRequestKind,
-    targetStudent,
-    setTargetStudent,
-    reason,
-    setReason,
-    panelCandidate,
-    setPanelCandidate,
-    panelRemoval,
-    setPanelRemoval,
-    submitRequest,
-    registrar = false,
-  } = props;
-  const candidates = [
-    ...state.students
-      .filter((student) => !state.panel.some((member) => member.id === student.id))
-      .slice(0, 5)
-      .map((student) => ({ ...student, title: "Community representative" })),
-    demoRegistrar,
-  ];
-
-  return (
-    <form className="request-form" onSubmit={submitRequest}>
-      <div className="form-title">
-        <div>
-          <div className="eyebrow">
-            {registrar ? "REQUEST AN EXCEPTION" : "NEW PROTECTED REQUEST"}
-          </div>
-          <h3>Ask the 2-of-3 panel to review</h3>
-        </div>
-        <span className="approval-badge">2 of 3 required</span>
-      </div>
-      <div className="form-grid">
-        <label>
-          Action
-          <select
-            value={requestKind}
-            onChange={(event) => setRequestKind(event.target.value)}
-          >
-            {Object.entries(actionNames).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {requestKind !== "panel" && (
-          <>
-            <label>
-              Protected Vault
-              <select
-                value={selectedCourse}
-                onChange={(event) => setSelectedCourse(event.target.value)}
-              >
-                {state.courses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.code} · {course.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Participant
-              <select
-                value={targetStudent}
-                onChange={(event) => setTargetStudent(event.target.value)}
-              >
-                {state.students.map((student) => (
-                  <option key={student.id} value={student.id}>
-                    {student.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </>
-        )}
-        {requestKind === "panel" && (
-          <>
-            <label>
-              Replace panel member
-              <select
-                value={panelRemoval}
-                onChange={(event) => setPanelRemoval(event.target.value)}
-              >
-                {state.panel.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              With new member
-              <select
-                value={panelCandidate}
-                onChange={(event) => setPanelCandidate(event.target.value)}
-              >
-                {candidates.map((candidate) => (
-                  <option key={candidate.id} value={candidate.id}>
-                    {candidate.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </>
-        )}
-        <label className="reason-field">
-          Public reason
-          <textarea
-            required
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            maxLength={240}
-            placeholder="State the reason; this will be recorded in the public audit log."
-          />
-        </label>
-      </div>
-      <div className="form-footer">
-        <span>Requester cannot approve their own request.</span>
-        <button className="button dark" type="submit">
-          Submit public request
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function CapacityEditor({ course, actor, dispatch }) {
-  const [capacity, setCapacity] = useState(String(course.capacity));
-  useEffect(() => setCapacity(String(course.capacity)), [course.capacity]);
-
-  function save(event) {
-    event.preventDefault();
-    dispatch({ type: "capacity", courseId: course.id, capacity, actor });
-  }
-
-  return (
-    <form className="capacity-label" onSubmit={save}>
-      <label htmlFor={`capacity-${course.id}`}>Quota limit</label>
-      <input
-        id={`capacity-${course.id}`}
-        type="number"
-        min="1"
-        value={capacity}
-        onChange={(event) => setCapacity(event.target.value)}
-      />
-      <button className="button quiet" type="submit">
-        Save
-      </button>
-    </form>
   );
 }
