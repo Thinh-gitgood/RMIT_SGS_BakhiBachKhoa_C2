@@ -1,0 +1,68 @@
+{
+  "appMeta": {
+    "brandName": "TideGuard",
+    "brandMark": "T",
+    "eyebrow": "EMERGENT AUTHORITY, WITHOUT A TRUST BOTTLENECK",
+    "headlineLine1": "Shared power,",
+    "headlineLine2": "no master key.",
+    "subtitle": "Sensitive records and high-impact exceptions require collective 2-of-3 quorum approval and TideCloak tag-bound encryption.",
+    "promiseTitle": "No single admin\ncan override the rules."
+  },
+  "panel": [
+    { "id": "approver-1", "name": "Dr. Amara Okafor", "title": "Governance Chair" },
+    { "id": "approver-2", "name": "Sam Williams", "title": "Compliance Lead" },
+    { "id": "approver-3", "name": "Alex Morgan", "title": "Community Representative" }
+  ],
+  "adminActor": {
+    "id": "registrar-1",
+    "name": "Taylor Reed",
+    "title": "System Administrator"
+  },
+  "students": [
+    { "id": "s01", "name": "Avery Chen" },
+    { "id": "s02", "name": "Jordan Patel" },
+    { "id": "s03", "name": "Morgan Lee" },
+    { "id": "s04", "name": "Riley Nguyen" },
+    { "id": "s05", "name": "Casey Taylor" },
+    { "id": "s06", "name": "Quinn Wilson" },
+    { "id": "s07", "name": "Skyler Brown" },
+    { "id": "s08", "name": "Drew Martin" },
+    { "id": "s09", "name": "Emerson Davis" },
+    { "id": "s10", "name": "Rowan Garcia" }
+  ],
+  "courses": [
+    {
+      "id": "vault-health",
+      "code": "CARE-01",
+      "name": "Cardiology & Genomic Care Passport",
+      "tag": "cardiology-record",
+      "capacity": 3,
+      "enrolled": ["s01", "s02", "s03"],
+      "waitlist": ["s04", "s05"],
+      "encryptedPreview": "TIDE_E2EE_V1[cardiology-record]::gAAAAABn8x9K2m...",
+      "decryptedNote": "Verified Clinical Summary: LVEF 62%, Contraindication: Amiodarone."
+    },
+    {
+      "id": "vault-treasury",
+      "code": "TREASURY-02",
+      "name": "Dual-Control Treasury & AI Execution Key",
+      "tag": "treasury-wire",
+      "capacity": 4,
+      "enrolled": ["s06", "s07", "s08"],
+      "waitlist": ["s09"],
+      "encryptedPreview": "TIDE_E2EE_V1[treasury-wire]::gAAAAABn8x9L7p...",
+      "decryptedNote": "Scoped Ephemeral Settlement Token: TIDE-AUTH-9941-X82B (Max $50,000)."
+    },
+    {
+      "id": "vault-research",
+      "code": "CONSENT-03",
+      "name": "Biomedical Research Consent Cohort",
+      "tag": "research-consent",
+      "capacity": 3,
+      "enrolled": ["s02", "s09"],
+      "waitlist": ["s10"],
+      "encryptedPreview": "TIDE_E2EE_V1[research-consent]::gAAAAABn8x9Q4v...",
+      "decryptedNote": "Anonymized Cohort Dataset #402 — Active Participant Consent Verified."
+    }
+  ]
+}
