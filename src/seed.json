@@ -1,68 +1,112 @@
 {
   "appMeta": {
-    "brandName": "TideGuard",
-    "brandMark": "T",
-    "eyebrow": "EMERGENT AUTHORITY, WITHOUT A TRUST BOTTLENECK",
-    "headlineLine1": "Shared power,",
+    "brandName": "ScholarLock",
+    "brandMark": "S",
+    "eyebrow": "EMERGENT AUTHORITY · ZERO-TRUST ACADEMIC IP VAULT",
+    "headlineLine1": "Co-own breakthroughs,",
     "headlineLine2": "no master key.",
-    "subtitle": "Sensitive records and high-impact exceptions require collective 2-of-3 quorum approval and TideCloak tag-bound encryption.",
-    "promiseTitle": "No single admin\ncan override the rules."
+    "subtitle": "High-value joint research assets are locked with TideCloak tag-bound E2EE. No rogue co-author (1/3 shards) or cloud administrator (0/3 shards) can unilaterally exfiltrate IP—authority emerges transiently in-browser only upon a 3-of-3 consensus quorum.",
+    "promiseTitle": "No rogue insider or admin\ncan steal shared research."
   },
-  "panel": [
-    { "id": "approver-1", "name": "Dr. Amara Okafor", "title": "Governance Chair" },
-    { "id": "approver-2", "name": "Sam Williams", "title": "Compliance Lead" },
-    { "id": "approver-3", "name": "Alex Morgan", "title": "Community Representative" }
+  "coAuthors": [
+    {
+      "id": "linh",
+      "name": "Khánh Linh",
+      "roleTitle": "AI Lead",
+      "role": "co-author",
+      "shardLabel": "Shard 1/3",
+      "avatar": "KL",
+      "isRogue": false,
+      "bio": "Principal architect of the 3D Vision-Transformer glioma segmentation model."
+    },
+    {
+      "id": "quan",
+      "name": "Trung Quân",
+      "roleTitle": "Data Engineer",
+      "role": "co-author",
+      "shardLabel": "Shard 2/3",
+      "avatar": "TQ",
+      "isRogue": false,
+      "bio": "Lead clinical data engineer managing the 1,200-patient MRI biomarker pipeline."
+    },
+    {
+      "id": "tan",
+      "name": "Nhật Tân",
+      "roleTitle": "Rogue Member (Kẻ phản bội)",
+      "role": "co-author",
+      "shardLabel": "Shard 3/3 (Revocable)",
+      "avatar": "NT",
+      "isRogue": true,
+      "bio": "Co-author attempting unilateral IP exfiltration to sell weights & data to Apex BioTech Corp."
+    }
   ],
+  "arbitrator": {
+    "id": "thinh",
+    "name": "Dr. Cường Thịnh",
+    "roleTitle": "RMIT Ethics Chair & Academic Advisor",
+    "role": "ethics-arbitrator",
+    "shardLabel": "Arbitration Shard 3/3",
+    "avatar": "CT",
+    "bio": "Authorized to revoke a rogue shard and co-sign Shard 3/3 only when cryptographic breach evidence is recorded in the Immutable Audit Log."
+  },
   "adminActor": {
-    "id": "registrar-1",
-    "name": "Taylor Reed",
-    "title": "System Administrator"
+    "id": "sysadmin",
+    "name": "RMIT IT Admin / Cloud Operator",
+    "roleTitle": "Infrastructure Operator",
+    "role": "sysadmin",
+    "shardLabel": "0/3 Shards",
+    "avatar": "IT",
+    "bio": "Manages physical PostgreSQL & S3 storage buckets. Holds 0 decryption shards—sees 100% blind ciphertext."
   },
-  "students": [
-    { "id": "s01", "name": "Avery Chen" },
-    { "id": "s02", "name": "Jordan Patel" },
-    { "id": "s03", "name": "Morgan Lee" },
-    { "id": "s04", "name": "Riley Nguyen" },
-    { "id": "s05", "name": "Casey Taylor" },
-    { "id": "s06", "name": "Quinn Wilson" },
-    { "id": "s07", "name": "Skyler Brown" },
-    { "id": "s08", "name": "Drew Martin" },
-    { "id": "s09", "name": "Emerson Davis" },
-    { "id": "s10", "name": "Rowan Garcia" }
+  "assets": [
+    {
+      "id": "asset-paper",
+      "fileName": "research_paper_final.pdf",
+      "icon": "📄",
+      "code": "IP-PAPER-01",
+      "title": "IEEE ViT-MRI Brain Tumor Manuscript",
+      "tag": "ip-paper",
+      "size": "14.2 MB",
+      "cipherSuite": "AES-256-GCM · TideCloak DKG",
+      "encryptedEnvelope": "TIDE_E2EE_V1[ip-paper]::gAAAAABn9xK2mQp8vR1sL9wZ4cT7yU0aB3nM5kJ...",
+      "workingPreview": "Working Abstract Preview: Hybrid 3D Vision-Transformer achieves 96.4% F1 on multi-center glioma MRI cohorts (Full mathematical proofs & LaTeX source locked by 3/3 Quorum).",
+      "unlockedPlaintext": "UNLOCKED MASTER MANUSCRIPT: Full IEEE LaTeX source, ablation tables, and patent-pending attention kernel equations verified for publication."
+    },
+    {
+      "id": "asset-weights",
+      "fileName": "brain_cancer_model.pth",
+      "icon": "💻",
+      "code": "IP-WEIGHTS-02",
+      "title": "Proprietary 3D-ViT Model Weights (96.4% Acc)",
+      "tag": "ip-weights",
+      "size": "1.84 GB",
+      "cipherSuite": "AES-256-GCM · TideCloak DKG",
+      "encryptedEnvelope": "TIDE_E2EE_V1[ip-weights]::gAAAAABn9xL7pWz3kM8dF2qX6vN1cR9tY4hJ0bG...",
+      "workingPreview": "Working Telemetry Preview: Checkpoint Epoch 120 | Val Dice: 0.964 | 400x A100 GPU hours (Raw .pth tensor weights locked by 3/3 Quorum).",
+      "unlockedPlaintext": "UNLOCKED MASTER WEIGHTS: SHA256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08 — Ready for licensed clinical deployment."
+    },
+    {
+      "id": "asset-dataset",
+      "fileName": "confidential_patient_dataset.csv",
+      "icon": "📊",
+      "code": "IP-DATA-03",
+      "title": "Anonymized Clinical MRI Cohort (1,200 Patients)",
+      "tag": "ip-dataset",
+      "size": "680 MB",
+      "cipherSuite": "AES-256-GCM · TideCloak DKG",
+      "encryptedEnvelope": "TIDE_E2EE_V1[ip-dataset]::gAAAAABn9xQ4vBn5rT1yK9mP3xZ8wL2cF7jH6dS...",
+      "workingPreview": "Working Schema Preview: 1,200 rows × 48 clinical biomarkers | Ethics Approval #RMIT-BIO-2026 (Raw patient records locked by 3/3 Quorum).",
+      "unlockedPlaintext": "UNLOCKED COHORT DATASET: 1,200 verified de-identified clinical MRI biomarker records unlocked under RMIT Ethics Certificate #EA-2026-303."
+    }
   ],
-  "courses": [
+  "initialAudit": [
     {
-      "id": "vault-health",
-      "code": "CARE-01",
-      "name": "Cardiology & Genomic Care Passport",
-      "tag": "cardiology-record",
-      "capacity": 3,
-      "enrolled": ["s01", "s02", "s03"],
-      "waitlist": ["s04", "s05"],
-      "encryptedPreview": "TIDE_E2EE_V1[cardiology-record]::gAAAAABn8x9K2m...",
-      "decryptedNote": "Verified Clinical Summary: LVEF 62%, Contraindication: Amiodarone."
-    },
-    {
-      "id": "vault-treasury",
-      "code": "TREASURY-02",
-      "name": "Dual-Control Treasury & AI Execution Key",
-      "tag": "treasury-wire",
-      "capacity": 4,
-      "enrolled": ["s06", "s07", "s08"],
-      "waitlist": ["s09"],
-      "encryptedPreview": "TIDE_E2EE_V1[treasury-wire]::gAAAAABn8x9L7p...",
-      "decryptedNote": "Scoped Ephemeral Settlement Token: TIDE-AUTH-9941-X82B (Max $50,000)."
-    },
-    {
-      "id": "vault-research",
-      "code": "CONSENT-03",
-      "name": "Biomedical Research Consent Cohort",
-      "tag": "research-consent",
-      "capacity": 3,
-      "enrolled": ["s02", "s09"],
-      "waitlist": ["s10"],
-      "encryptedPreview": "TIDE_E2EE_V1[research-consent]::gAAAAABn8x9Q4v...",
-      "decryptedNote": "Anonymized Cohort Dataset #402 — Active Participant Consent Verified."
+      "id": "genesis-01",
+      "time": "2026-10-22T06:00:00.000Z",
+      "actor": "TideCloak DKG Enclave",
+      "severity": "info",
+      "action": "3-of-3 Threshold IP Vault Initialized (No Master Key at Rest)",
+      "reason": "Sealed research_paper_final.pdf [ip-paper], brain_cancer_model.pth [ip-weights], and confidential_patient_dataset.csv [ip-dataset] under AES-256-GCM. Distributed Shards 1/3 (Khánh Linh), 2/3 (Trung Quân), and 3/3 (Nhật Tân)."
     }
   ]
 }

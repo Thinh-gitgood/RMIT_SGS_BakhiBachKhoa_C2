@@ -14,7 +14,7 @@
 
 ## Value & impact
 - **Sovereignty for Co-Authors:** Student innovators and university labs retain verifiable ownership over joint IP.
-- **Deadlock-Proof Arbitration:** If a rogue member ("Charlie") attempts unilateral IP theft, ScholarLock blocks export (`1/3 shards`) and triggers an ethics-arbitrated dispute quorum (`3/3 shards`) so honest researchers are never held hostage.
+- **Deadlock-Proof Arbitration:** If a rogue member ("Nhật Tân") attempts unilateral IP theft, ScholarLock blocks export (`1/3 shards`) and triggers an ethics-arbitrated dispute quorum (`3/3 shards`) so honest researchers are never held hostage.
 
 ## Why TideCloak matters
 - **Beyond Standard RBAC:** Conventional RBAC relies on servers that hold plaintext master keys.
@@ -22,8 +22,8 @@
 
 ## Prototype & storytelling
 Judges can test two contrasting live flows:
-1. 🔴 **Rogue & Admin Attacks Blocked:** Click Charlie’s **"Attempt Unilateral IP Export"** (`403 UNILATERAL_EXFILTRATION_BLOCKED` — `1/3 shards`) and test **"Admin Master Override"** (`403 ZERO_CUSTODY_ENFORCED` — `0/3 shards`).
-2. 🟢 **Emergent Authority Release:** Alice, Bob, and Ethics Chair Dr. Nguyen co-sign a **3-of-3 Quorum** to revoke Charlie’s shard, decrypt the full IP bundle in-browser, and mint a verified release certificate.
+1. 🔴 **Rogue & Admin Attacks Blocked:** Click Nhật Tân’s **"Attempt Unilateral IP Export"** (`403 UNILATERAL_EXFILTRATION_BLOCKED` — `1/3 shards`) and test **"Admin Master Override"** (`403 ZERO_CUSTODY_ENFORCED` — `0/3 shards`).
+2. 🟢 **Emergent Authority Release:** Khánh Linh, Trung Quân, and Ethics Chair Dr. Cường Thịnh co-sign a **3-of-3 Quorum** to revoke Nhật Tân’s shard, decrypt the full IP bundle in-browser, and mint a verified release certificate.
 
 ---
 
@@ -31,27 +31,38 @@ Judges can test two contrasting live flows:
 
 ```mermaid
 flowchart TD
-    subgraph Storage["🔒 Cryptographically Blind Storage (0/3 Shards — AES-256-GCM)"]
+    subgraph Vault["🔒 BLIND STORAGE VAULT (AES-256-GCM — Zero Master Key at Rest)"]
+        Assets["<b>Protected Joint Research Assets</b><br/>📄 research_paper_final.pdf <i>(Tag: ip-paper)</i><br/>💻 brain_cancer_model.pth <i>(Tag: ip-weights)</i><br/>📊 confidential_patient_dataset.csv <i>(Tag: ip-dataset)</i>"]
+    end
+
+    subgraph Blocked["⛔ UNILATERAL & CENTRALIZED ATTACKS (CRYPTOGRAPHICALLY BLOCKED)"]
         direction LR
-        P1["📄 research_paper_final.pdf<br/>Tag: ip-paper"]
-        P2["💻 brain_cancer_model.pth<br/>Tag: ip-weights"]
-        P3["📊 patient_dataset.csv<br/>Tag: ip-dataset"]
+        subgraph Rogue["🚨 Flow 1: Rogue Insider Exfiltration"]
+            C["Nhật Tân (Rogue Member)<br/><i>Holds Shard 1/3</i>"] -->|Attempt Unilateral Export| E1["❌ 403 BLOCKED<br/><b>UNILATERAL_EXFILTRATION_BLOCKED</b><br/><i>Auto-logged to Audit Trail</i>"]
+        end
+        subgraph Admin["🖥️ Flow 2: Centralized Admin Override"]
+            A["RMIT IT Admin / Server<br/><i>Holds 0/3 Shards</i>"] -->|Attempt Master Override| E2["❌ 403 BLOCKED<br/><b>ZERO_CUSTODY_ENFORCED</b><br/><i>Blind Ciphertext — No Master Key</i>"]
+        end
     end
 
-    subgraph Flow1["🚨 Flow 1: Rogue Exfiltration Attempt"]
-        Charlie["Charlie (Rogue Member)<br/>Holds Shard 1/3"] -->|Unilateral Export| Blk1["❌ 403 UNILATERAL_EXFILTRATION_BLOCKED<br/>Logged to Immutable Audit Trail"]
+    subgraph Quorum["🟢 FLOW 3: 3-OF-3 EMERGENT AUTHORITY QUORUM (LEGITIMATE RELEASE)"]
+        Linh["👩‍🔬 Khánh Linh<br/><b>Shard 1/3</b>"]
+        Quan["👨‍💻 Trung Quân<br/><b>Shard 2/3</b>"]
+        Thinh["⚖️ Dr. Cường Thịnh<br/><b>Arbitration Shard 3/3</b>"]
+
+        Linh & Quan & Thinh -->|Co-Sign Dispute Resolution| EA["⚡ Emergent Authority Activated<br/><i>Transient In-Browser Decryption (doDecrypt)</i>"]
+        EA --> Success["🎉 Plaintext IP Bundle Unlocked & Verified Release Certificate Minted"]
     end
 
-    subgraph Flow2["🖥️ Flow 2: Centralized Admin Override Attempt"]
-        SysAdmin["RMIT IT Admin / Server<br/>Holds 0/3 Shards"] -->|Master Override| Blk2["❌ 403 ZERO_CUSTODY_ENFORCED<br/>No Master Key exists at rest"]
-    end
-
-    subgraph Flow3["🟢 Flow 3: 3-of-3 Emergent Authority Quorum"]
-        Alice["👩‍🔬 Alice (Shard 1/3)"] & Bob["👨‍💻 Bob (Shard 2/3)"] & Nguyen["⚖️ Dr. Nguyen (Arbitration Shard 3/3)"] -->|Co-Sign Dispute Resolution| EA["⚡ Emergent Authority Active<br/>Transient In-Browser Decryption"]
-    end
-
-    EA -->|doDecrypt| Success["🎉 Plaintext IP Assets Decrypted<br/>+ Verified IP Release Certificate Minted"]
+    Assets -.->|Missing 2 of 3 Shards| C
+    Assets -.->|Holds 0 of 3 Shards| A
+    Assets ==>|Requires 3 of 3 Signatures| EA
 ```
+
+> [!TIP]
+> **Key Architecture Takeaway for Judges:**
+> - **At Rest (Zero Admin Custody):** The server stores only blind ciphertext (`AES-256-GCM`). Neither IT Admins (`0/3` shards) nor rogue insiders (`1/3` shards) possess a master key.
+> - **At Runtime (Emergent Authority):** Authority only **emerges transiently** in the client browser when a valid **3-of-3 consensus quorum** is cryptographically assembled.
 
 ---
 
@@ -92,10 +103,10 @@ docker run -d -p 8080:8080 \
 
 | Actor | Role | Authority Shard | Custody / Capability |
 | :--- | :--- | :---: | :--- |
-| 👩‍🔬 **Alice (AI Lead)** | `co-author` | **Shard 1/3** | Daily working preview; requires 3/3 quorum for full bundle export |
-| 👨‍💻 **Bob (Data Engineer)** | `co-author` | **Shard 2/3** | Daily working preview; requires 3/3 quorum for full bundle export |
-| 🚨 **Charlie (Rogue Member)** | `co-author` | **Shard 3/3** *(Revocable)* | Attempts unilateral sale; blocked by missing quorum (`1/3`) |
-| ⚖️ **Dr. Nguyen (Ethics Chair)** | `ethics-arbitrator` | **Arbitration Shard** | Replaces Charlie's revoked shard upon immutable breach evidence |
+| 👩‍🔬 **Khánh Linh (AI Lead)** | `co-author` | **Shard 1/3** | Daily working preview; requires 3/3 quorum for full bundle export |
+| 👨‍💻 **Trung Quân (Data Engineer)** | `co-author` | **Shard 2/3** | Daily working preview; requires 3/3 quorum for full bundle export |
+| 🚨 **Nhật Tân (Rogue Member)** | `co-author` | **Shard 3/3** *(Revocable)* | Attempts unilateral sale; blocked by missing quorum (`1/3`) |
+| ⚖️ **Dr. Cường Thịnh (Ethics Chair)** | `ethics-arbitrator` | **Arbitration Shard** | Replaces Nhật Tân's revoked shard upon immutable breach evidence |
 | 🖥️ **RMIT IT Admin / Server** | `sysadmin` | **0/3 Shards** | **Blind Storage** — sees only ciphertext; cannot decrypt or export |
 
 ---
@@ -115,10 +126,10 @@ docker run -d -p 8080:8080 \
 Follow these 3 flows in the **Command Center** to test all security properties:
 
 ### 1️⃣ Flow 1: Rogue Insider Exfiltration Blocked
-- **Where:** Switch to the **`Rogue Insider (Charlie)`** tab.
-- **Action:** Click **"🚨 Charlie: Attempt Unilateral IP Export (Sell to Company)"**.
+- **Where:** Switch to the **`Rogue Insider (Nhật Tân)`** tab.
+- **Action:** Click **"🚨 Nhật Tân: Attempt Unilateral IP Export (Sell to Company)"**.
 - **Result:** 
-  - 🛑 Blocked with **`403 UNILATERAL_EXFILTRATION_BLOCKED`** (`Charlie holds only 1 of 3 required shards`).
+  - 🛑 Blocked with **`403 UNILATERAL_EXFILTRATION_BLOCKED`** (`Nhật Tân holds only 1 of 3 required shards`).
   - 📝 An immutable violation event is automatically signed and logged into the **Audit Trail**.
 
 ### 2️⃣ Flow 2: Blind Server & Admin Override Blocked
@@ -130,10 +141,10 @@ Follow these 3 flows in the **Command Center** to test all security properties:
 
 ### 3️⃣ Flow 3: 3-of-3 Emergent Authority Quorum
 - **Where:** Switch to the **`Quorum & Dispute Panel`** tab.
-- **Action:** Based on Charlie's breach log, assemble the **3-of-3 Key Shards**:
-  1. Click **"Alice: Co-Sign Approval"** *(Shard 1/3)*
-  2. Click **"Bob: Co-Sign Approval"** *(Shard 2/3)*
-  3. Click **"Dr. Nguyen: Revoke Charlie & Co-Sign"** *(Arbitration Shard 3/3)*
+- **Action:** Based on Nhật Tân's breach log, assemble the **3-of-3 Key Shards**:
+  1. Click **"Khánh Linh: Co-Sign Approval"** *(Shard 1/3)*
+  2. Click **"Trung Quân: Co-Sign Approval"** *(Shard 2/3)*
+  3. Click **"Dr. Cường Thịnh: Revoke Nhật Tân & Co-Sign"** *(Arbitration Shard 3/3)*
 - **Result:**
   - ⚡ **Emergent Authority Activates:** Client-side decryption (`doDecrypt`) unlocks all 3 plaintexts in-memory.
   - 📜 A cryptographically verifiable **Verified IP Release Certificate** is minted with consensus signatures.
