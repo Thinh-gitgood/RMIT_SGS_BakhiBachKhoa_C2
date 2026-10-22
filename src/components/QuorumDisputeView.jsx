@@ -122,59 +122,75 @@ export default function QuorumDisputeView({
   const combinerShards = [
     {
       id: "shard-1",
+      short: "Shard 1",
       title: "Khánh Linh · Shard 1/3",
       signed: Boolean(signedShards?.linh),
-      value: signedShards?.linh ? "✓ 0x94a8...309d" : "🔒 Shard #1 Pending",
-      border: signedShards?.linh ? "1.5px solid #10b981" : "1px dashed #cbd5e1",
-      bg: signedShards?.linh ? "#e5f7ef" : "#ffffff",
-      titleColor: signedShards?.linh ? "#065f46" : "#475569",
-      valueColor: signedShards?.linh ? "#0b7a56" : "#64748b",
+      heightPct: signedShards?.linh ? 100 : 32,
+      value: signedShards?.linh ? "Verified · 0x94a8...309d" : "Shard #1 Pending",
+      border: signedShards?.linh
+        ? "1px solid rgba(93, 169, 131, 0.65)"
+        : "1px dashed rgba(163, 177, 198, 0.6)",
+      bg: signedShards?.linh ? "#e3f3eb" : "rgba(255, 255, 255, 0.55)",
+      titleColor: signedShards?.linh ? "#286a4b" : "#4a6d82",
+      valueColor: signedShards?.linh ? "#286a4b" : "#5a697d",
     },
     {
       id: "shard-2",
+      short: "Shard 2",
       title: "Trung Quân · Shard 2/3",
       signed: Boolean(signedShards?.quan),
-      value: signedShards?.quan ? "✓ 0x3c7d...614e" : "🔒 Shard #2 Pending",
-      border: signedShards?.quan ? "1.5px solid #10b981" : "1px dashed #cbd5e1",
-      bg: signedShards?.quan ? "#e5f7ef" : "#ffffff",
-      titleColor: signedShards?.quan ? "#065f46" : "#475569",
-      valueColor: signedShards?.quan ? "#0b7a56" : "#64748b",
+      heightPct: signedShards?.quan ? 100 : 32,
+      value: signedShards?.quan ? "Verified · 0x3c7d...614e" : "Shard #2 Pending",
+      border: signedShards?.quan
+        ? "1px solid rgba(93, 169, 131, 0.65)"
+        : "1px dashed rgba(163, 177, 198, 0.6)",
+      bg: signedShards?.quan ? "#e3f3eb" : "rgba(255, 255, 255, 0.55)",
+      titleColor: signedShards?.quan ? "#286a4b" : "#4a6d82",
+      valueColor: signedShards?.quan ? "#286a4b" : "#5a697d",
     },
     {
       id: "shard-3",
+      short: "Shard 3",
       title: "Shard 3/3 · Arb. / Co-Author",
       signed: Boolean(signedShards?.thinh),
+      heightPct: signedShards?.thinh ? 100 : rogueBreachLogged ? 68 : 24,
       value: signedShards?.thinh
-        ? "✓ 0x7f12...883b"
+        ? "Verified · 0x7f12...883b"
         : rogueBreachLogged
-          ? "⚡ Arbitration Slot Ready (Dr. Thịnh)"
-          : "⚠️ Nhật Tân Holding Out (Deadlock Risk)",
+          ? "Arbitration Ready (Dr. Thịnh)"
+          : "Nhật Tân Holding Out (Deadlock)",
       border: signedShards?.thinh
-        ? "1.5px solid #10b981"
+        ? "1px solid rgba(93, 169, 131, 0.65)"
         : rogueBreachLogged
-          ? "1.5px solid #60a5fa"
-          : "1px dashed #f59e0b",
+          ? "1px solid rgba(139, 124, 181, 0.65)"
+          : "1px dashed rgba(217, 140, 95, 0.6)",
       bg: signedShards?.thinh
-        ? "#e5f7ef"
+        ? "#e3f3eb"
         : rogueBreachLogged
-          ? "#eff6ff"
-          : "#fffbeb",
+          ? "#ede8f6"
+          : "#faefe3",
       titleColor: signedShards?.thinh
-        ? "#065f46"
+        ? "#286a4b"
         : rogueBreachLogged
-          ? "#1e40af"
-          : "#92400e",
+          ? "#5c4b82"
+          : "#8f5820",
       valueColor: signedShards?.thinh
-        ? "#0b7a56"
+        ? "#286a4b"
         : rogueBreachLogged
-          ? "#1d4ed8"
-          : "#b45309",
+          ? "#5c4b82"
+          : "#8f5820",
     },
   ];
 
   const certSigners = [
-    { label: `1/3 · ${linh?.name || "Khánh Linh"}`, hash: "0x94a8f1c2...e71b309d" },
-    { label: `2/3 · ${quan?.name || "Trung Quân"}`, hash: "0x3c7d09b4...a82f614e" },
+    {
+      label: `1/3 · ${linh?.name || "Khánh Linh"}`,
+      hash: "0x94a8f1c2...e71b309d",
+    },
+    {
+      label: `2/3 · ${quan?.name || "Trung Quân"}`,
+      hash: "0x3c7d09b4...a82f614e",
+    },
     {
       label: `3/3 · ${arbitrator?.name || "Dr. Cường Thịnh"}`,
       hash: "0x7f12e5d9...c04a883b",
@@ -187,19 +203,21 @@ export default function QuorumDisputeView({
         {/* Quorum Panel Header */}
         <div className="quorum-panel-header">
           <div>
-            <span className="panel-kicker">EMERGENT AUTHORITY CONSENSUS ENGINE</span>
-            <h2>🔐 3-of-3 Release Quorum</h2>
+            <span className="panel-kicker">
+              EMERGENT AUTHORITY CONSENSUS &amp; ARBITRATION
+            </span>
+            <h2>3-of-3 Release Quorum</h2>
           </div>
           <span
             className={`status-pill ${isMasterUnlocked ? "emerald" : "amber"}`}
             role="status"
             aria-atomic="true"
           >
-            {isMasterUnlocked ? "⚡ 3/3 Unlocked" : `${quorumCount}/3 Shards`}
+            {isMasterUnlocked ? "3/3 Unlocked" : `${quorumCount}/3 Shards`}
           </span>
         </div>
 
-        {/* 3/3 Progress Bar + 3-Shard Cryptographic Key Combiner */}
+        {/* 3/3 Progress Bar + Serenity-Style Bar Telemetry & 3-Shard Combiner */}
         <div className="quorum-meter-box">
           <div className="quorum-meter-labels">
             <span>
@@ -207,31 +225,39 @@ export default function QuorumDisputeView({
             </span>
             <span className={isMasterUnlocked ? "emerald-text" : "muted-text"}>
               {isMasterUnlocked
-                ? "✓ Master Key Reconstructed via doDecrypt()"
-                : `${3 - quorumCount} more signature(s) required to unlock`}
+                ? "Master Key Reconstructed via doDecrypt()"
+                : `${3 - quorumCount} more signature(s) required`}
             </span>
           </div>
           <div className="quorum-progress-track">
             <div
-              className={`quorum-progress-fill ${isMasterUnlocked ? "complete" : ""}`}
+              className={`quorum-progress-fill ${
+                isMasterUnlocked ? "complete" : ""
+              }`}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
           <div className="quorum-steps-row">
-            <span className={quorumCount >= 0 ? "step-active" : ""}>0/3 Sealed</span>
-            <span className={quorumCount >= 1 ? "step-active" : ""}>1/3 (Khánh Linh)</span>
-            <span className={quorumCount >= 2 ? "step-active" : ""}>2/3 (Trung Quân)</span>
+            <span className={quorumCount >= 0 ? "step-active" : ""}>
+              0/3 Sealed
+            </span>
+            <span className={quorumCount >= 1 ? "step-active" : ""}>
+              1/3 (Khánh Linh)
+            </span>
+            <span className={quorumCount >= 2 ? "step-active" : ""}>
+              2/3 (Trung Quân)
+            </span>
             <span className={isMasterUnlocked ? "step-complete" : ""}>
               3/3 (Unlocked)
             </span>
           </div>
 
-          {/* Feature 1: 3-Shard Cryptographic Key Combiner Diagram */}
+          {/* 3-Shard Cryptographic Key Combiner Diagram */}
           <div
             style={{
-              marginTop: "10px",
-              paddingTop: "9px",
-              borderTop: "1px dashed #cbd5e1",
+              marginTop: "12px",
+              paddingTop: "11px",
+              borderTop: "1px dashed rgba(163, 177, 198, 0.5)",
             }}
             aria-label="3-Shard Cryptographic Key Combiner"
           >
@@ -241,24 +267,70 @@ export default function QuorumDisputeView({
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: "6px",
-                fontSize: "9.5px",
-                fontWeight: 800,
+                fontSize: "10.5px",
+                fontWeight: 700,
                 letterSpacing: "0.4px",
-                color: "#475569",
+                color: "var(--color-primary-dark)",
                 textTransform: "uppercase",
-                marginBottom: "6px",
+                marginBottom: "8px",
               }}
             >
-              <span>🧩 3-Shard Key Combiner</span>
-              <span style={{ whiteSpace: "nowrap" }}>DKG: 3/3</span>
+              <span>3-Shard Threshold Key Combiner</span>
+              <span>DKG: 3/3</span>
             </div>
 
+            {/* Serenity-Style Pastel Pillar Bars for the 3 Shards */}
             <div
               style={{
                 display: "grid",
-                gap: "5px",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "8px",
+                height: "54px",
+                alignItems: "end",
+                marginBottom: "9px",
+                padding: "6px 10px",
+                borderRadius: "12px",
+                background: "rgba(255, 255, 255, 0.42)",
               }}
             >
+              {combinerShards.map((shard) => (
+                <div
+                  key={`${shard.id}-bar`}
+                  style={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    gap: "3px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "100%",
+                      height: `${shard.heightPct}%`,
+                      borderRadius: "8px 8px 4px 4px",
+                      background: shard.signed
+                        ? "linear-gradient(180deg, #8cc5a3 0%, #5da983 100%)"
+                        : "linear-gradient(180deg, #b8a9c9 0%, #7c9eb2 100%)",
+                      opacity: shard.signed ? 1 : 0.45,
+                      transition: "all 0.3s ease",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: "9.5px",
+                      fontWeight: 700,
+                      color: "var(--color-text-muted)",
+                    }}
+                  >
+                    {shard.short}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "grid", gap: "6px" }}>
               {combinerShards.map((shard) => (
                 <div
                   key={shard.id}
@@ -267,8 +339,8 @@ export default function QuorumDisputeView({
                     justifyContent: "space-between",
                     alignItems: "center",
                     gap: "8px",
-                    padding: "5px 8px",
-                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    borderRadius: "10px",
                     border: shard.border,
                     background: shard.bg,
                     transition: "all 0.2s ease",
@@ -276,8 +348,8 @@ export default function QuorumDisputeView({
                 >
                   <span
                     style={{
-                      fontSize: "10px",
-                      fontWeight: 800,
+                      fontSize: "11px",
+                      fontWeight: 700,
                       color: shard.titleColor,
                       whiteSpace: "nowrap",
                     }}
@@ -286,7 +358,7 @@ export default function QuorumDisputeView({
                   </span>
                   <code
                     style={{
-                      fontSize: "9.5px",
+                      fontSize: "10px",
                       fontWeight: 700,
                       color: shard.valueColor,
                       textAlign: "right",
@@ -302,11 +374,12 @@ export default function QuorumDisputeView({
             <div
               style={{
                 textAlign: "center",
-                fontSize: "9.5px",
-                fontWeight: 800,
-                color: isMasterUnlocked ? "#059669" : "#64748b",
-                margin: "5px 0 4px",
-                letterSpacing: "0.2px",
+                fontSize: "10px",
+                fontWeight: 700,
+                color: isMasterUnlocked
+                  ? "var(--color-mint-dark)"
+                  : "var(--color-text-muted)",
+                margin: "7px 0 6px",
               }}
             >
               ▼ In-Browser Key Assembly (Ephemeral AES-256-GCM Key) ▼
@@ -315,33 +388,33 @@ export default function QuorumDisputeView({
             {/* Combined Output Box */}
             <div
               style={{
-                padding: "7px 10px",
-                borderRadius: "7px",
+                padding: "9px 12px",
+                borderRadius: "12px",
                 textAlign: "center",
-                fontSize: "10px",
-                fontWeight: 800,
-                lineHeight: 1.35,
+                fontSize: "11px",
+                fontWeight: 700,
+                lineHeight: 1.4,
                 border: isMasterUnlocked
-                  ? "1.5px solid #10b981"
-                  : "1px solid #cbd5e1",
+                  ? "1px solid rgba(93, 169, 131, 0.7)"
+                  : "1px solid rgba(255, 255, 255, 0.7)",
                 background: isMasterUnlocked
-                  ? "linear-gradient(135deg, #065f46, #0b7a56)"
-                  : "#e2e8f0",
-                color: isMasterUnlocked ? "#ffffff" : "#475569",
+                  ? "linear-gradient(135deg, #5da983 0%, #468f6b 100%)"
+                  : "var(--color-bg)",
+                color: isMasterUnlocked ? "#ffffff" : "var(--color-text-muted)",
                 boxShadow: isMasterUnlocked
-                  ? "0 3px 10px rgba(16, 185, 129, 0.22)"
-                  : "none",
+                  ? "0 4px 12px rgba(70, 143, 107, 0.28)"
+                  : "var(--shadow-sm-light), var(--shadow-sm-dark)",
                 transition: "all 0.25s ease",
               }}
             >
               {isMasterUnlocked
-                ? "⚡ EPHEMERAL KEY RECONSTRUCTED IN RAM (Zero Server Custody)"
-                : `🔒 Key Unformed (${quorumCount}/3 Shards) — No Master Key Exists at Rest`}
+                ? "EPHEMERAL KEY RECONSTRUCTED IN RAM (Zero Server Custody)"
+                : `Key Unformed (${quorumCount}/3 Shards) — No Master Key Exists at Rest`}
             </div>
           </div>
         </div>
 
-        {/* 3 Signature Slots */}
+        {/* 3 Signature Slots (Styled like Calming Session Booking Cards) */}
         <div className="quorum-slots-list">
           {/* Slot 1: Khánh Linh */}
           <div
@@ -352,17 +425,23 @@ export default function QuorumDisputeView({
             <div className="slot-top">
               <div className="slot-person">
                 <span
-                  className={`avatar mini ${signedShards.linh ? "signed-avatar" : ""}`}
+                  className={`avatar mini ${
+                    signedShards.linh ? "signed-avatar" : ""
+                  }`}
                 >
                   {linh?.avatar}
                 </span>
                 <div>
-                  <strong>👩‍🔬 {linh?.name}</strong>
+                  <strong>{linh?.name}</strong>
                   <small>{linh?.roleTitle} · Shard 1/3</small>
                 </div>
               </div>
-              <span className={`shard-state ${signedShards.linh ? "signed" : "pending"}`}>
-                {signedShards.linh ? "✓ SIGNED" : "SLOT 1/3"}
+              <span
+                className={`shard-state ${
+                  signedShards.linh ? "signed" : "pending"
+                }`}
+              >
+                {signedShards.linh ? "SIGNED" : "SLOT 1/3"}
               </span>
             </div>
 
@@ -374,13 +453,13 @@ export default function QuorumDisputeView({
                 <span
                   style={{
                     display: "block",
-                    fontSize: "10.5px",
-                    color: "var(--emerald)",
-                    marginTop: "4px",
+                    fontSize: "11px",
+                    color: "var(--color-mint-dark)",
+                    marginTop: "5px",
                     fontWeight: 600,
                   }}
                 >
-                  ✓ Approved IEEE ViT-MRI manuscript &amp; model weights release.
+                  Approved IEEE ViT-MRI manuscript &amp; model weights release.
                 </span>
               </div>
             ) : (
@@ -390,7 +469,7 @@ export default function QuorumDisputeView({
                 onClick={() => onSignShard("linh")}
                 title="Khánh Linh co-signs approval with Shard 1/3"
               >
-                ✍️ Sign Approval (1/3)
+                Sign Approval (1/3)
               </button>
             )}
           </div>
@@ -404,17 +483,23 @@ export default function QuorumDisputeView({
             <div className="slot-top">
               <div className="slot-person">
                 <span
-                  className={`avatar mini ${signedShards.quan ? "signed-avatar" : ""}`}
+                  className={`avatar mini ${
+                    signedShards.quan ? "signed-avatar" : ""
+                  }`}
                 >
                   {quan?.avatar}
                 </span>
                 <div>
-                  <strong>👨‍💻 {quan?.name}</strong>
+                  <strong>{quan?.name}</strong>
                   <small>{quan?.roleTitle} · Shard 2/3</small>
                 </div>
               </div>
-              <span className={`shard-state ${signedShards.quan ? "signed" : "pending"}`}>
-                {signedShards.quan ? "✓ SIGNED" : "SLOT 2/3"}
+              <span
+                className={`shard-state ${
+                  signedShards.quan ? "signed" : "pending"
+                }`}
+              >
+                {signedShards.quan ? "SIGNED" : "SLOT 2/3"}
               </span>
             </div>
 
@@ -426,13 +511,13 @@ export default function QuorumDisputeView({
                 <span
                   style={{
                     display: "block",
-                    fontSize: "10.5px",
-                    color: "var(--emerald)",
-                    marginTop: "4px",
+                    fontSize: "11px",
+                    color: "var(--color-mint-dark)",
+                    marginTop: "5px",
                     fontWeight: 600,
                   }}
                 >
-                  ✓ Verified 1,200-patient clinical cohort de-identification.
+                  Verified 1,200-patient clinical cohort de-identification.
                 </span>
               </div>
             ) : (
@@ -442,7 +527,7 @@ export default function QuorumDisputeView({
                 onClick={() => onSignShard("quan")}
                 title="Trung Quân co-signs approval with Shard 2/3"
               >
-                ✍️ Sign Approval (2/3)
+                Sign Approval (2/3)
               </button>
             )}
           </div>
@@ -460,7 +545,7 @@ export default function QuorumDisputeView({
             {/* Original Shard 3 Holder Status (Nhật Tân) */}
             <div className="rogue-slot-status">
               <span>
-                🚨 <b>{tan?.name}</b> (Shard 3/3)
+                <b>{tan?.name}</b> (Original Shard 3/3)
               </span>
               <span
                 className={`rogue-status-chip ${
@@ -473,10 +558,10 @@ export default function QuorumDisputeView({
                 style={{ whiteSpace: "nowrap" }}
               >
                 {signedShards.thinh
-                  ? "🚫 SHARD REVOKED"
+                  ? "SHARD REVOKED"
                   : rogueBreachLogged
-                    ? "🚨 403 BREACH LOGGED"
-                    : "⚠️ Refusing to Co-Sign"}
+                    ? "403 BREACH LOGGED"
+                    : "Refusing to Co-Sign"}
               </span>
             </div>
 
@@ -484,13 +569,15 @@ export default function QuorumDisputeView({
             <div className="slot-top arbitrator-top">
               <div className="slot-person">
                 <span
-                  className={`avatar mini ${signedShards.thinh ? "signed-avatar" : ""}`}
+                  className={`avatar mini ${
+                    signedShards.thinh ? "signed-avatar" : ""
+                  }`}
                 >
                   {arbitrator?.avatar}
                 </span>
                 <div>
                   <strong style={{ whiteSpace: "nowrap" }}>
-                    ⚖️ {arbitrator?.name}
+                    {arbitrator?.name}
                   </strong>
                   <small>Ethics Arbitrator · Shard 3/3</small>
                 </div>
@@ -505,10 +592,10 @@ export default function QuorumDisputeView({
                 }`}
               >
                 {signedShards.thinh
-                  ? "✓ SIGNED"
+                  ? "SIGNED"
                   : rogueBreachLogged
-                    ? "⚡ UNLOCKED"
-                    : "🔒 DORMANT"}
+                    ? "UNLOCKED"
+                    : "DORMANT"}
               </span>
             </div>
 
@@ -516,56 +603,46 @@ export default function QuorumDisputeView({
               {signedShards.thinh
                 ? "Nhật Tân’s shard revoked via Audit Log proof; Arbitration Shard 3/3 active."
                 : rogueBreachLogged
-                  ? "⚡ Breach Logged in Audit Trail — Ethics Arbitration Unlocked! Dr. Cường Thịnh can now revoke Nhật Tân & sign 3/3."
-                  : "🔒 Dormant Guardrail: Only unlocks if an immutable 403 breach is logged (prevents collusion against an innocent co-author)."}
+                  ? "Breach Logged in Audit Trail — Ethics Arbitration Unlocked! Dr. Cường Thịnh can now revoke Nhật Tân & sign 3/3."
+                  : "Dormant Guardrail: Only unlocks if an immutable 403 breach is logged (prevents collusion against an innocent co-author)."}
             </p>
 
-            {/* Feature 2: 3 Cryptographic Guardrails on Slot 3 */}
+            {/* 3 Cryptographic Guardrails on Slot 3 (Recessed Neumorphic Well) */}
             <div
+              className="neu-inset"
               style={{
-                background: signedShards.thinh
-                  ? "#e8f8f0"
-                  : rogueBreachLogged
-                    ? "#eff6ff"
-                    : "#f1f5f9",
-                border: signedShards.thinh
-                  ? "1px solid #a7f3d0"
-                  : rogueBreachLogged
-                    ? "1px solid #bfdbfe"
-                    : "1px solid #cbd5e1",
-                borderRadius: "7px",
-                padding: "7px 9px",
-                marginBottom: "9px",
-                fontSize: "10px",
-                lineHeight: 1.4,
-                color: "#1e293b",
+                padding: "10px 12px",
+                marginBottom: "11px",
+                fontSize: "10.5px",
+                lineHeight: 1.45,
+                color: "var(--color-text)",
               }}
             >
               <div
                 style={{
-                  fontWeight: 800,
-                  fontSize: "9.5px",
+                  fontWeight: 700,
+                  fontSize: "10px",
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
-                  color: "#334155",
-                  marginBottom: "4px",
+                  color: "var(--color-primary-dark)",
+                  marginBottom: "5px",
                 }}
               >
-                ⚖️ 3 Cryptographic Anti-Collusion Guardrails:
+                3 Cryptographic Anti-Collusion Guardrails
               </div>
-              <div style={{ display: "grid", gap: "3px" }}>
+              <div style={{ display: "grid", gap: "4px" }}>
                 <div>
-                  <b>🛡️ Guardrail 1 — 1/3 Shard Only:</b> Advisor holds no Master
-                  Key &amp; cannot read student Working Previews.
+                  <b>1. 1/3 Shard Only:</b> Advisor holds no Master Key &amp;
+                  cannot read student Working Previews.
                 </div>
                 <div>
-                  <b>🔒 Guardrail 2 — Anti-Collusion Dormant Lock:</b> Hard-locked (
-                  <code>DORMANT</code>) until an immutable <code>403</code> breach
-                  is logged in the Audit Log.
+                  <b>2. Anti-Collusion Dormant Lock:</b> Hard-locked (
+                  <code>DORMANT</code>) until an immutable <code>403</code>{" "}
+                  breach is logged.
                 </div>
                 <div>
-                  <b>📜 Guardrail 3 — Public Accountability:</b> Revocation of Nhật
-                  Tân’s shard is permanently sealed into the Release Certificate.
+                  <b>3. Public Accountability:</b> Revocation of Nhật Tân’s
+                  shard is permanently sealed into the Release Certificate.
                 </div>
               </div>
             </div>
@@ -578,13 +655,13 @@ export default function QuorumDisputeView({
                 <span
                   style={{
                     display: "block",
-                    fontSize: "10.5px",
-                    color: "var(--emerald)",
-                    marginTop: "4px",
+                    fontSize: "11px",
+                    color: "var(--color-mint-dark)",
+                    marginTop: "5px",
                     fontWeight: 600,
                   }}
                 >
-                  ✓ Revocation Order #REV-2026-NT03 sealed into Ledger.
+                  Revocation Order #REV-2026-NT03 sealed into Ledger.
                 </span>
               </div>
             ) : rogueBreachLogged ? (
@@ -594,7 +671,7 @@ export default function QuorumDisputeView({
                 onClick={() => onSignShard("thinh")}
                 title="Dr. Cường Thịnh exercises ethics authority to revoke rogue shard and sign"
               >
-                ⚖️ Revoke Nhật Tân &amp; Sign (3/3)
+                Revoke Nhật Tân &amp; Sign (3/3)
               </button>
             ) : (
               <button
@@ -603,13 +680,13 @@ export default function QuorumDisputeView({
                 disabled
                 title="Awaiting immutable 403 breach evidence from Nhật Tân"
               >
-                🔒 Locked — No Breach Logged
+                Locked — No Breach Logged
               </button>
             )}
           </div>
         </div>
 
-        {/* Feature 3: Upgraded Verified IP Release Certificate (CERT-TIDE-RMIT-2026-303) */}
+        {/* Upgraded Verified IP Release Certificate (CERT-TIDE-RMIT-2026-303) */}
         {isMasterUnlocked && (
           <div
             className="certificate-compact"
@@ -619,7 +696,7 @@ export default function QuorumDisputeView({
             <div className="cert-compact-head">
               <div>
                 <span className="cert-kicker">
-                  📜 TIDECLOAK SOVEREIGN RELEASE CERTIFICATE
+                  TIDECLOAK SOVEREIGN RELEASE CERTIFICATE
                 </span>
                 <h3>{CERT_ID}</h3>
               </div>
@@ -633,15 +710,13 @@ export default function QuorumDisputeView({
 
             {/* 3 Ed25519 Signatures Table */}
             <div
+              className="neu-inset"
               style={{
-                background: "#ffffff",
-                border: "1px solid #a7f3d0",
-                borderRadius: "7px",
-                padding: "7px 9px",
-                marginBottom: "8px",
-                fontSize: "10px",
+                padding: "9px 12px",
+                marginBottom: "10px",
+                fontSize: "10.5px",
                 display: "grid",
-                gap: "4px",
+                gap: "5px",
               }}
             >
               {certSigners.map((sig) => (
@@ -656,21 +731,21 @@ export default function QuorumDisputeView({
                   <span>
                     <b>{sig.label}</b> (Ed25519):
                   </span>
-                  <code style={{ color: "#0b7a56", fontWeight: 700 }}>
-                    {sig.hash} ✓
+                  <code style={{ color: "var(--color-mint-dark)", fontWeight: 700 }}>
+                    {sig.hash}
                   </code>
                 </div>
               ))}
               <div
                 style={{
-                  borderTop: "1px dashed #cbd5e1",
-                  paddingTop: "4px",
+                  borderTop: "1px dashed rgba(163, 177, 198, 0.55)",
+                  paddingTop: "5px",
                   marginTop: "2px",
-                  color: "#be123c",
+                  color: "var(--color-coral-dark)",
                   fontWeight: 700,
                 }}
               >
-                🚫 REVOKED: {tan?.name || "Nhật Tân"} (Reason: HTTP 403 Unilateral
+                REVOKED: {tan?.name || "Nhật Tân"} (Reason: HTTP 403 Unilateral
                 Exfiltration Attempt)
               </div>
             </div>
@@ -685,7 +760,8 @@ export default function QuorumDisputeView({
                 Custody
               </span>
               <span>
-                <b>Enclave Security:</b> Zero Master Key at Rest · Ed25519 Verified Signatures
+                <b>Enclave Security:</b> Zero Master Key at Rest · Ed25519
+                Verified Signatures
               </span>
             </div>
 
@@ -693,8 +769,8 @@ export default function QuorumDisputeView({
             <div
               style={{
                 display: "flex",
-                gap: "7px",
-                marginTop: "9px",
+                gap: "8px",
+                marginTop: "11px",
                 flexWrap: "wrap",
               }}
             >
@@ -704,14 +780,14 @@ export default function QuorumDisputeView({
                 style={{ flex: 1 }}
                 onClick={handleDownloadCertificate}
               >
-                ⬇️ Download Certificate (.json)
+                Download Certificate (.json)
               </button>
               <button
                 type="button"
                 className="button outline btn-sm"
                 onClick={handleCopyVerificationHash}
               >
-                {copiedHash ? "✓ Copied Hash!" : "📋 Copy Verification Hash"}
+                {copiedHash ? "Copied Hash!" : "Copy Verification Hash"}
               </button>
             </div>
           </div>

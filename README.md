@@ -81,7 +81,13 @@ npm run dev
 Open **`http://localhost:5137`** in your browser.
 
 > [!NOTE]
-> **Zero-Friction Judge Evaluation (Default):** ScholarLock includes an interactive simulation mode that executes the full cryptographic lifecycle, tag-bound E2EE envelopes (`TIDE_E2EE_V1`), quorum state machine, and immutable audit logs directly out of the box without requiring Docker.
+> **Official Plan C & Zero-Friction Judge Evaluation (Default):**
+> Following the official Hackathon announcement (*"Tide's network is under heavy load... Build your prototype as though TideCloak were protecting it, and simulate those protections for now. Simulated and live integrations are judged exactly the same"*), ScholarLock fully implements TideCloak's architecture:
+> - **Sign-In & Identity:** Passwordless WebAuthn/Enclave identity simulation with `Ed25519` hardware assertions.
+> - **Roles & Entitlements:** Mapped to cryptographic authority shards (`co-author` 1/3, `ethics-arbitrator` 3/3, `sysadmin` 0/3).
+> - **Tag-Bound Access Checks:** Client-side E2EE envelopes (`TIDE_E2EE_V1`) bound to tags `ip-paper`, `ip-weights`, `ip-dataset`.
+> - **Emergent Authority Quorum:** 3-of-3 threshold consensus with zero master keys at rest.
+> - Click the **"🏛️ Plan C: Where TideCloak Fits"** button in the app header to view the live interactive architectural blueprint.
 
 ---
 
