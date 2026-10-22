@@ -2,9 +2,36 @@ import React, { useEffect, useState } from "react";
 import { useTideCloak } from "@tidecloak/react";
 import seed from "./seed.json";
 import CoAuthorVaultView from "./components/CoAuthorVaultView.jsx";
-import RogueAttackView from "./components/RogueAttackView.jsx";
 import QuorumDisputeView from "./components/QuorumDisputeView.jsx";
 import BlindServerView from "./components/BlindServerView.jsx";
+
+const ACCOUNT_LIST = [
+  {
+    id: "linh",
+    buttonLabel: "👩‍🔬 Khánh Linh (AI Lead · 1/3)",
+    ...seed.coAuthors[0],
+  },
+  {
+    id: "quan",
+    buttonLabel: "👨‍💻 Trung Quân (Data Eng · 2/3)",
+    ...seed.coAuthors[1],
+  },
+  {
+    id: "tan",
+    buttonLabel: "🚨 Nhật Tân (Co-Author · 3/3)",
+    ...seed.coAuthors[2],
+  },
+  {
+    id: "thinh",
+    buttonLabel: "⚖️ Dr. Cường Thịnh (Ethics Advisor)",
+    ...seed.arbitrator,
+  },
+  {
+    id: "sysadmin",
+    buttonLabel: "🖥️ RMIT IT Admin (Server DB)",
+    ...seed.adminActor,
+  },
+];
 
 export default function App() {
   const {
@@ -13,17 +40,16 @@ export default function App() {
     isLoading,
     login,
     logout,
-    hasRealmRole,
     getValueFromToken,
     doEncrypt,
     doDecrypt,
   } = useTideCloak();
 
-  const [activeTab, setActiveTab] = useState("vault");
-  const [activeCoAuthorId, setActiveCoAuthorId] = useState("linh");
+  const [activeUserId, setActiveUserId] = useState("linh");
   const [workingPreviewUnlocked, setWorkingPreviewUnlocked] = useState({});
   const [rogueBreachLogged, setRogueBreachLogged] = useState(false);
   const [rogueAttemptCount, setRogueAttemptCount] = useState(0);
+  const [exportBlockModal, setExportBlockModal] = useState(null);
   const [adminOverrideBlocked, setAdminOverrideBlocked] = useState(false);
   const [adminAttemptCount, setAdminAttemptCount] = useState(0);
   const [signedShards, setSignedShards] = useState({
@@ -41,12 +67,10 @@ export default function App() {
     }
   }, [isInitializing]);
 
+  const activeUser =
+    ACCOUNT_LIST.find((u) => u.id === activeUserId) || ACCOUNT_LIST[0];
   const quorumCount = Object.values(signedShards).filter(Boolean).length;
   const isMasterUnlocked = quorumCount === 3;
-  const isShardRevoked = Boolean(signedShards.thinh);
-
-  const rogueActor = seed.coAuthors.find((a) => a.isRogue) || seed.coAuthors[2];
-  const allActors = [...seed.coAuthors, seed.arbitrator];
 
   function appendAudit(actor, action, reason, severity = "info") {
     setAuditLog((prev) => [
@@ -62,18 +86,32 @@ export default function App() {
     ]);
   }
 
+  function handleSelectUser(userId) {
+    setActiveUserId(userId);
+    if (userId !== "tan") {
+      setExportBlockModal(null);
+    }
+  }
+
   async function handleToggleWorkingPreview(asset) {
-    const currentlyUnlocked = Boolean(workingPreviewUnlocked[asset.id]);
-    if (currentlyUnlocked) {
-      setWorkingPreviewUnlocked((prev) => ({ ...prev, [asset.id]: false }));
-      setNotice(`Re-locked Tier-1 working preview for ${asset.fileName}.`);
+    if (activeUser.id === "thinh") {
+      setNotice(
+        "🔒 Privacy Guardrail: Academic Ethics Advisor cannot read student daily working previews.",
+      );
       return;
     }
 
-    const currentAuthor =
-      seed.coAuthors.find((a) => a.id === activeCoAuthorId) || seed.coAuthors[0];
+    const currentlyUnlocked = Boolean(workingPreviewUnlocked[asset.id]);
+    if (currentlyUnlocked) {
+      setWorkingPreviewUnlocked((prev) => ({ ...prev, [asset.id]: false }));
+      return;
+    }
 
-    if (authenticated && typeof doEncrypt === "function" && typeof doDecrypt === "function") {
+    if (
+      authenticated &&
+      typeof doEncrypt === "function" &&
+      typeof doDecrypt === "function"
+    ) {
       try {
         const encrypted = await doEncrypt([
           { data: asset.workingPreview, tags: [asset.tag] },
@@ -84,61 +122,62 @@ export default function App() {
         if (decrypted && decrypted[0]) {
           setWorkingPreviewUnlocked((prev) => ({ ...prev, [asset.id]: true }));
           appendAudit(
-            `${currentAuthor.name} (${currentAuthor.shardLabel})`,
-            `Tier-1 Tag Preview Decrypted [live _tide_${asset.tag}]`,
-            `Verified tag policy for ${asset.fileName} in-browser while server remains blind.`,
+            `${activeUser.name} (${activeUser.shardLabel})`,
+            `Working Preview Decrypted [_tide_${asset.tag}]`,
+            `Verified tag policy for ${asset.fileName} via live TideCloak enclave.`,
             "info",
-          );
-          setNotice(
-            `Decrypted Tier-1 working preview for "${asset.fileName}" via live TideCloak enclave.`,
           );
           return;
         }
       } catch {
-        // Fall through to interactive hybrid enclave mode
+        // Fallback to hybrid enclave preview
       }
     }
 
     setWorkingPreviewUnlocked((prev) => ({ ...prev, [asset.id]: true }));
     appendAudit(
-      `${currentAuthor.name} (${currentAuthor.shardLabel})`,
-      `Tier-1 Tag Preview Decrypted [_tide_${asset.tag}]`,
-      `Client-side tag policy verified for ${asset.fileName}. Raw Tier-2 Master IP remains locked by 3/3 Quorum.`,
+      `${activeUser.name} (${activeUser.shardLabel})`,
+      `Working Preview Opened [_tide_${asset.tag}]`,
+      `Opened co-author working summary for ${asset.fileName}. Full export remains locked by 3/3 Quorum.`,
       "info",
-    );
-    setNotice(
-      `Unlocked Tier-1 working preview for "${asset.fileName}" (Tag: _tide_${asset.tag}).`,
     );
   }
 
-  function handleUnlockAllPreviews() {
-    const nextState = {};
-    seed.assets.forEach((a) => {
-      nextState[a.id] = true;
-    });
-    setWorkingPreviewUnlocked(nextState);
-    const currentAuthor =
-      seed.coAuthors.find((a) => a.id === activeCoAuthorId) || seed.coAuthors[0];
-    appendAudit(
-      `${currentAuthor.name} (${currentAuthor.shardLabel})`,
-      "All Tier-1 Working Previews Decrypted in Browser",
-      "Verified _tide_ip-paper, _tide_ip-weights, and _tide_ip-dataset working metadata. Master IP export remains locked until 3/3 Quorum.",
-      "info",
-    );
-    setNotice("All 3 Tier-1 working previews decrypted in-browser.");
-  }
+  function handleAttemptExport(targetFile) {
+    if (isMasterUnlocked) {
+      appendAudit(
+        `${activeUser.name}`,
+        `✅ Verified IP Exported (${targetFile})`,
+        `Exported decrypted plaintext under 3-of-3 Quorum Certificate #CERT-TIDE-RMIT-2026-303.`,
+        "emerald",
+      );
+      setNotice(
+        `✅ Exported unlocked "${targetFile}" under Verified Release Certificate #CERT-TIDE-RMIT-2026-303.`,
+      );
+      return;
+    }
 
-  function handleTriggerRogueAttack() {
+    // Quorum is < 3/3 -> Block unilateral export and log breach!
+    const actorDisplay =
+      activeUser.id === "tan"
+        ? "Nhật Tân (Co-Author · Shard 3/3)"
+        : `${activeUser.name} (${activeUser.shardLabel})`;
+
     setRogueBreachLogged(true);
     setRogueAttemptCount((c) => c + 1);
+    setExportBlockModal({
+      actorName: actorDisplay,
+      targetFile,
+    });
+
     appendAudit(
-      "Nhật Tân (Rogue Member · Shard 3/3)",
-      "🛑 403 UNILATERAL_EXFILTRATION_BLOCKED",
-      "Attempted unilateral export of brain_cancer_model.pth & confidential_patient_dataset.csv to sell to Apex BioTech Corp. Blocked by TideCloak: holds only 1 of 3 required shards; no Master Key exists.",
+      "Nhật Tân (Co-Author · Shard 3/3)",
+      `🚨 403 UNILATERAL_EXFILTRATION_BLOCKED — Export Rejected (${targetFile})`,
+      "Nhật Tân attempted unilateral IP export (Blocked: holds only 1 of 3 shards; Master Key does not exist). Ethics Arbitration Shard (Dr. Cường Thịnh) is now unlocked.",
       "danger",
     );
     setNotice(
-      "🚨 403 UNILATERAL_EXFILTRATION_BLOCKED: Nhật Tân’s rogue IP export was mathematically rejected and logged to the Immutable Audit Trail.",
+      "🚨 403 UNILATERAL_EXFILTRATION_BLOCKED: Unilateral export blocked & logged! Ethics Arbitration (Slot 3/3) is now unlocked.",
     );
   }
 
@@ -147,20 +186,21 @@ export default function App() {
     setAdminAttemptCount((c) => c + 1);
     appendAudit(
       `${seed.adminActor.name} (0/3 Shards)`,
-      "⛔ 403 ZERO_CUSTODY_ENFORCED",
-      "Infrastructure Operator attempted root master override on encrypted database blobs. Blocked: server holds 0 of 3 shards and possesses only blind AES-256-GCM ciphertext.",
+      "⛔ 403 ZERO_CUSTODY_ENFORCED — Force Decrypt DB Blocked",
+      "Infrastructure operator attempted unilateral database decrypt override. Rejected: server holds 0 of 3 shards and possesses only blind AES-256-GCM ciphertext.",
       "danger",
     );
     setNotice(
-      "⛔ 403 ZERO_CUSTODY_ENFORCED: RMIT IT Admin override rejected — server possesses 0 shards and only blind ciphertext.",
+      "⛔ 403 ZERO_CUSTODY_ENFORCED: Server holds 0 of 3 shards and possesses only blind ciphertext.",
     );
   }
 
   async function handleSignShard(shardKey) {
     if (signedShards[shardKey]) return;
+
     if (shardKey === "thinh" && !rogueBreachLogged) {
       setNotice(
-        "🔒 Guardrail Active: Dr. Cường Thịnh’s Arbitration Shard is dormant while Nhật Tân is in good standing. An immutable 403 breach must be logged first.",
+        "🔒 Dormant Guardrail: Dr. Cường Thịnh’s Arbitration Shard only unlocks after a 403 breach is logged.",
       );
       return;
     }
@@ -170,78 +210,88 @@ export default function App() {
     setSignedShards(nextShards);
 
     if (shardKey === "linh") {
+      setActiveUserId("linh");
       appendAudit(
         "Khánh Linh (AI Lead · Shard 1/3)",
-        `Quorum Signature Recorded (${nextCount}/3 Shards)`,
-        "Signed Shard 1/3 approving official IEEE ViT-MRI manuscript & model release.",
+        `✍️ Quorum Slot 1/3 Signed (${nextCount}/3 Shards)`,
+        "Signed Co-Author Shard 1/3 approving IEEE ViT-MRI manuscript & model release.",
         "quorum",
       );
     } else if (shardKey === "quan") {
+      setActiveUserId("quan");
       appendAudit(
         "Trung Quân (Data Engineer · Shard 2/3)",
-        `Quorum Signature Recorded (${nextCount}/3 Shards)`,
-        "Signed Shard 2/3 verifying 1,200-patient clinical cohort de-identification.",
+        `✍️ Quorum Slot 2/3 Signed (${nextCount}/3 Shards)`,
+        "Signed Co-Author Shard 2/3 verifying 1,200-patient clinical cohort de-identification.",
         "quorum",
       );
     } else if (shardKey === "thinh") {
+      setActiveUserId("thinh");
+      setExportBlockModal(null);
       appendAudit(
-        "Dr. Cường Thịnh (Ethics Chair · Arbitration Shard 3/3)",
-        `Rogue Shard Revoked & Arbitration Shard Signed (${nextCount}/3 Shards)`,
-        "Verified Immutable Audit Log breach evidence against Nhật Tân. Revoked Nhật Tân’s Shard 3/3 and co-signed Arbitration Shard 3/3 to prevent capstone deadlock.",
+        "Dr. Cường Thịnh (Ethics Advisor · Arbitration Shard 3/3)",
+        `⚖️ Nhật Tân Revoked & Quorum Slot 3/3 Signed (${nextCount}/3 Shards)`,
+        "Verified immutable 403 breach log. Revoked Nhật Tân’s shard and co-signed Arbitration Shard 3/3.",
         "quorum",
       );
     }
 
     if (nextCount === 3) {
-      if (authenticated && typeof doDecrypt === "function" && typeof doEncrypt === "function") {
+      if (
+        authenticated &&
+        typeof doDecrypt === "function" &&
+        typeof doEncrypt === "function"
+      ) {
         try {
           const encrypted = await doEncrypt(
-            seed.assets.map((a) => ({ data: a.unlockedPlaintext, tags: [a.tag] })),
+            seed.assets.map((a) => ({
+              data: a.unlockedPlaintext,
+              tags: [a.tag],
+            })),
           );
           await doDecrypt(
-            seed.assets.map((a, idx) => ({ encrypted: encrypted[idx], tags: [a.tag] })),
+            seed.assets.map((a, idx) => ({
+              encrypted: encrypted[idx],
+              tags: [a.tag],
+            })),
           );
         } catch {
-          // Proceed with hybrid threshold assembly
+          // Hybrid threshold assembly
         }
       }
 
       const nowIso = new Date().toISOString();
       setCertificateTimestamp(nowIso);
-      const allUnlocked = {};
-      seed.assets.forEach((a) => {
-        allUnlocked[a.id] = true;
-      });
-      setWorkingPreviewUnlocked(allUnlocked);
+      setExportBlockModal(null);
 
       appendAudit(
         "TideCloak 3-of-3 Emergent Authority Enclave",
-        "⚡ 3/3 EMERGENT AUTHORITY UNLOCKED & CERTIFICATE MINTED",
-        "All 3 authority shards aligned (Khánh Linh + Trung Quân + Dr. Cường Thịnh; Nhật Tân revoked). Transient decryption key reconstructed in-browser via doDecrypt(). Master IP Bundle unlocked & Certificate #CERT-TIDE-RMIT-2026-303 minted.",
+        "⚡ 3/3 QUORUM ALIGNED — IP BUNDLE UNLOCKED & CERTIFICATE MINTED",
+        "All 3 threshold shards aligned (Khánh Linh + Trung Quân + Dr. Cường Thịnh). Transient decryption key assembled in-browser via doDecrypt(). Certificate #CERT-TIDE-RMIT-2026-303 issued.",
         "emerald",
       );
       setNotice(
-        "⚡ 3/3 Shards Aligned! Emergent Authority activated in-browser — Master IP Bundle unlocked & Verified Release Certificate minted.",
+        "⚡ 3/3 Quorum Aligned! All 3 Capstone IP files are now unlocked in-browser & Certificate #CERT-TIDE-RMIT-2026-303 is minted.",
       );
     } else {
       setNotice(
-        `Cryptographic signature recorded (${nextCount}/3 Shards). ${3 - nextCount} more shard(s) required for Emergent Authority.`,
+        `Signature recorded (${nextCount}/3 Shards). ${3 - nextCount} more signature(s) required to unlock IP bundle.`,
       );
     }
   }
 
   function handleResetDemo() {
-    setActiveTab("vault");
-    setActiveCoAuthorId("linh");
+    setActiveUserId("linh");
     setWorkingPreviewUnlocked({});
     setRogueBreachLogged(false);
     setRogueAttemptCount(0);
+    setExportBlockModal(null);
     setAdminOverrideBlocked(false);
     setAdminAttemptCount(0);
     setSignedShards({ linh: false, quan: false, thinh: false });
     setCertificateTimestamp(null);
     setAuditLog(seed.initialAudit);
-    setNotice("Demo state reset to initial 0/3 Blind Storage state.");
+    setNotice("Workspace reset to initial 0/3 encrypted state.");
   }
 
   async function startLogin() {
@@ -249,173 +299,107 @@ export default function App() {
       await login();
     } catch {
       setNotice(
-        "Interactive Cryptographic Simulation is active. To test live OIDC redirect, start the optional TideCloak Docker container on localhost:8080.",
+        "TideCloak Hybrid Enclave is active. Start localhost:8080 Docker container if you wish to test live OIDC redirect.",
       );
     }
   }
 
   if (isInitializing) {
-    return <main className="loading">Initializing ScholarLock TideCloak Enclave…</main>;
+    return (
+      <main className="loading">Initializing ScholarLock TideCloak Enclave…</main>
+    );
   }
 
   const tokenName = authenticated
     ? getValueFromToken("name") || getValueFromToken("preferred_username")
     : "";
-  const hasAdminRole =
-    authenticated && (hasRealmRole("sysadmin") || hasRealmRole("admin"));
-  const hasArbitratorRole = authenticated && hasRealmRole("ethics-arbitrator");
 
   return (
     <main className="shell">
-      {/* Top Navigation Bar */}
+      {/* Top Application Header */}
       <header className="topbar">
-        <a
-          className="brand"
-          href="#top"
-          onClick={(e) => {
-            e.preventDefault();
-            setActiveTab("vault");
-          }}
-        >
-          <span className="brand-mark">{seed.appMeta.brandMark}</span>
-          <span>
-            {seed.appMeta.brandName}
-            <small className="brand-sub">RMIT Zero-Trust IP Vault</small>
-          </span>
-        </a>
+        <div className="brand-block">
+          <a
+            className="brand"
+            href="#top"
+            onClick={(e) => {
+              e.preventDefault();
+              handleSelectUser("linh");
+            }}
+          >
+            <span className="brand-mark">{seed.appMeta.brandMark}</span>
+            <span>
+              {seed.appMeta.brandName}
+              <small className="brand-sub">
+                RMIT Capstone IP Vault · Built with TideCloak
+              </small>
+            </span>
+          </a>
+        </div>
 
         <div className="top-actions">
           <span className="enclave-pill">
             <span className="enclave-dot" />
             {authenticated
-              ? `Live TideCloak OIDC · ${tokenName || "Verified"}`
-              : "⚡ TideCloak Hybrid Enclave · Interactive Cryptographic Mode"}
+              ? `TideCloak OIDC · ${tokenName || "Verified"}`
+              : "⚡ TideCloak Enclave Active"}
           </span>
 
           <button
             type="button"
-            className="button outline reset-btn"
+            className="button outline btn-sm"
             onClick={handleResetDemo}
-            title="Reset all shards and logs for video demo rehearsal"
+            title="Reset workspace state"
           >
-            ↺ Reset Demo
+            ↺ Reset
           </button>
 
           {authenticated ? (
-            <button type="button" className="button quiet" onClick={logout}>
+            <button
+              type="button"
+              className="button quiet btn-sm"
+              onClick={logout}
+            >
               Log out
             </button>
           ) : (
             <button
               type="button"
-              className="button dark"
+              className="button dark btn-sm"
               onClick={startLogin}
               disabled={isLoading}
             >
-              {isLoading ? "Connecting…" : "Connect Live TideCloak"}
+              {isLoading ? "Connecting…" : "Log in with TideCloak"}
             </button>
           )}
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="hero-copy">
-          <div className="eyebrow">
-            <span /> {seed.appMeta.eyebrow}
-          </div>
-          <h1>
-            {seed.appMeta.headlineLine1}
-            <br />
-            {seed.appMeta.headlineLine2}
-          </h1>
-          <p>{seed.appMeta.subtitle}</p>
-        </div>
-
-        <div className="hero-card">
-          <span className="card-kicker">EMERGENT AUTHORITY STATUS</span>
-          <strong>
-            No single co-author or IT admin
-            <br />
-            holds a master key.
-          </strong>
-          <div className="avatar-stack">
-            {allActors.map((actor, index) => (
-              <span
-                key={actor.id}
-                className={`avatar a${index} ${actor.isRogue ? "rogue-mini" : ""}`}
-                title={`${actor.name} · ${actor.roleTitle} (${actor.shardLabel})`}
+      {/* Feature 1: Prominent Active User / Account Switcher Bar */}
+      <nav className="account-switcher-bar" aria-label="Switch Active User Account">
+        <span className="switcher-label">ACTIVE ACCOUNT:</span>
+        <div className="account-pills">
+          {ACCOUNT_LIST.map((account) => {
+            const isActive = activeUserId === account.id;
+            const isRogue = account.id === "tan";
+            const isServer = account.id === "sysadmin";
+            return (
+              <button
+                key={account.id}
+                type="button"
+                className={`account-pill ${isActive ? "active" : ""} ${
+                  isRogue ? "rogue-pill" : ""
+                } ${isServer ? "server-pill" : ""}`}
+                onClick={() => handleSelectUser(account.id)}
               >
-                {actor.avatar}
-              </span>
-            ))}
-          </div>
-          <small>
-            {isMasterUnlocked
-              ? "⚡ 3/3 Quorum Active · Plaintext Unlocked In-Browser"
-              : `🔒 ${quorumCount}/3 Shards Signed · Vault Ciphertext Blind At Rest`}
-          </small>
+                {account.buttonLabel}
+              </button>
+            );
+          })}
         </div>
-      </section>
-
-      {/* 4-Tab Role Switcher Command Center */}
-      <nav className="command-tabs" aria-label="Perspective Role Switcher">
-        <button
-          type="button"
-          className={`command-tab ${activeTab === "vault" ? "active" : ""}`}
-          onClick={() => setActiveTab("vault")}
-        >
-          <span className="tab-step">TAB 1 · CO-AUTHORS</span>
-          <strong>👩‍🔬 Co-Author Vault (Linh &amp; Quân)</strong>
-          <small>Tier-1 Tag Preview &amp; Tier-2 Status</small>
-        </button>
-
-        <button
-          type="button"
-          className={`command-tab danger-tab ${activeTab === "rogue" ? "active" : ""}`}
-          onClick={() => setActiveTab("rogue")}
-        >
-          <span className="tab-step">FLOW 1 · INSIDER ATTACK</span>
-          <strong>🚨 Rogue Insider (Nhật Tân)</strong>
-          <small>
-            {rogueBreachLogged
-              ? "403 Blocked & Breach Logged"
-              : "Test 1/3 Unilateral Exfiltration"}
-          </small>
-        </button>
-
-        <button
-          type="button"
-          className={`command-tab server-tab ${activeTab === "server" ? "active" : ""}`}
-          onClick={() => setActiveTab("server")}
-        >
-          <span className="tab-step">FLOW 2 · ZERO CUSTODY</span>
-          <strong>🖥️ Blind Server / IT Admin</strong>
-          <small>
-            {adminOverrideBlocked
-              ? "403 Zero Custody Enforced"
-              : "Inspect 0/3 Blind Ciphertext"}
-          </small>
-        </button>
-
-        <button
-          type="button"
-          className={`command-tab quorum-tab ${activeTab === "quorum" ? "active" : ""} ${
-            isMasterUnlocked ? "unlocked-tab" : ""
-          }`}
-          onClick={() => setActiveTab("quorum")}
-        >
-          <span className="tab-step">FLOW 3 · EMERGENT AUTHORITY</span>
-          <strong>⚖️ Quorum &amp; Dispute ({quorumCount}/3)</strong>
-          <small>
-            {isMasterUnlocked
-              ? "⚡ 3/3 Unlocked & Certificate Minted"
-              : "Revoke Rogue & Co-Sign 3/3 Release"}
-          </small>
-        </button>
       </nav>
 
-      {/* Live Toast Notice */}
+      {/* Toast Notification */}
       {notice && (
         <div className="notice" role="status">
           <span>{notice}</span>
@@ -429,136 +413,51 @@ export default function App() {
         </div>
       )}
 
-      {/* Active View Component */}
-      {activeTab === "vault" && (
-        <CoAuthorVaultView
-          assets={seed.assets}
-          coAuthors={seed.coAuthors}
-          activeCoAuthorId={activeCoAuthorId}
-          setActiveCoAuthorId={setActiveCoAuthorId}
-          workingPreviewUnlocked={workingPreviewUnlocked}
-          onToggleWorkingPreview={handleToggleWorkingPreview}
-          onUnlockAllPreviews={handleUnlockAllPreviews}
-          quorumCount={quorumCount}
-          isMasterUnlocked={isMasterUnlocked}
-          rogueBreachLogged={rogueBreachLogged}
-          onNavigateTab={setActiveTab}
-        />
-      )}
-
-      {activeTab === "rogue" && (
-        <RogueAttackView
-          rogueActor={rogueActor}
-          assets={seed.assets}
-          rogueBreachLogged={rogueBreachLogged}
-          rogueAttemptCount={rogueAttemptCount}
-          isShardRevoked={isShardRevoked}
-          onTriggerRogueAttack={handleTriggerRogueAttack}
-          onNavigateTab={setActiveTab}
-        />
-      )}
-
-      {activeTab === "server" && (
+      {/* Main Application Workspace */}
+      {activeUserId === "sysadmin" ? (
+        /* Feature 4: Raw Server Database Inspector View */
         <BlindServerView
           adminActor={seed.adminActor}
           assets={seed.assets}
           adminOverrideBlocked={adminOverrideBlocked}
           adminAttemptCount={adminAttemptCount}
           onTriggerAdminOverride={handleTriggerAdminOverride}
-          onNavigateTab={setActiveTab}
+          onReturnToVault={() => handleSelectUser("linh")}
         />
+      ) : (
+        /* Features 2 & 3: 2-Column Capstone File Vault + 3-of-3 Release Quorum Panel */
+        <section className="workspace-grid">
+          <CoAuthorVaultView
+            assets={seed.assets}
+            activeUser={activeUser}
+            workingPreviewUnlocked={workingPreviewUnlocked}
+            onToggleWorkingPreview={handleToggleWorkingPreview}
+            onAttemptExport={handleAttemptExport}
+            quorumCount={quorumCount}
+            isMasterUnlocked={isMasterUnlocked}
+            exportBlockModal={exportBlockModal}
+            rogueAttemptCount={rogueAttemptCount}
+            onCloseBlockModal={() => setExportBlockModal(null)}
+          />
+
+          <QuorumDisputeView
+            coAuthors={seed.coAuthors}
+            arbitrator={seed.arbitrator}
+            activeUser={activeUser}
+            signedShards={signedShards}
+            rogueBreachLogged={rogueBreachLogged}
+            onSignShard={handleSignShard}
+            certificateTimestamp={certificateTimestamp}
+          />
+        </section>
       )}
 
-      {activeTab === "quorum" && (
-        <QuorumDisputeView
-          coAuthors={seed.coAuthors}
-          arbitrator={seed.arbitrator}
-          assets={seed.assets}
-          signedShards={signedShards}
-          rogueBreachLogged={rogueBreachLogged}
-          onSignShard={handleSignShard}
-          onTriggerRogueAttack={handleTriggerRogueAttack}
-          certificateTimestamp={certificateTimestamp}
-        />
-      )}
-
-      {/* Why TideCloak Matters Comparison Section */}
-      <section className="section explainer">
-        <div className="section-heading">
+      {/* Compact Real-Time Activity / Audit Log */}
+      <section className="audit-section">
+        <div className="audit-header-bar">
           <div>
-            <div className="eyebrow">
-              <span /> WHY TIDECLOAK MATTERS FOR ACADEMIC &amp; CLINICAL IP
-            </div>
-            <h2>Ordinary OAuth / RBAC vs. TideCloak Emergent Authority</h2>
-          </div>
-          {authenticated && (
-            <span className="count-pill">
-              Active Realm Roles:{" "}
-              {hasAdminRole
-                ? "sysadmin"
-                : hasArbitratorRole
-                  ? "ethics-arbitrator"
-                  : "co-author"}
-            </span>
-          )}
-        </div>
-        <div className="compare-grid">
-          <article className="compare-card ordinary">
-            <span>ORDINARY LOGIN + CENTRALIZED BACKEND RBAC</span>
-            <h3>A rogue co-author or sysadmin could</h3>
-            <ul>
-              <li>
-                Exfiltrate raw AI weights (<code>brain_cancer_model.pth</code>) using
-                standard member credentials
-              </li>
-              <li>
-                Read plaintext clinical records directly from PostgreSQL or S3 storage as
-                an IT Admin
-              </li>
-              <li>
-                Hold the research team hostage by refusing to sign off on IEEE publication
-              </li>
-            </ul>
-            <p>
-              Conventional access control checks <code>if (user.role)</code> on a server
-              that still holds the master decryption key.
-            </p>
-          </article>
-          <article className="compare-card tide">
-            <span>SCHOLARLOCK + TIDECLOAK EMERGENT AUTHORITY</span>
-            <h3>Mathematical guarantees enforced</h3>
-            <ul>
-              <li>
-                <b>Zero Custody at Rest:</b> Server stores 100% blind{" "}
-                <code>AES-256-GCM</code> ciphertext (<code>0/3 shards</code>)
-              </li>
-              <li>
-                <b>Unilateral Exfiltration Blocked:</b> Rogue insider Nhật Tân (
-                <code>1/3 shards</code>) is cryptographically rejected with{" "}
-                <code>403 UNILATERAL_EXFILTRATION_BLOCKED</code>
-              </li>
-              <li>
-                <b>Deadlock-Proof 3/3 Quorum:</b> Ethics Arbitrator Dr. Cường Thịnh can
-                revoke a breached shard and co-sign <code>3/3</code> to unlock plaintext
-                transiently in-browser
-              </li>
-            </ul>
-            <p>
-              Authority never exists at rest—it emerges transiently in the browser only
-              when 3-of-3 threshold signatures align.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      {/* Immutable Cryptographic Audit Log */}
-      <section className="section audit-section">
-        <div className="section-heading">
-          <div>
-            <div className="eyebrow">
-              <span /> TAMPER-EVIDENT CRYPTOGRAPHIC LEDGER
-            </div>
-            <h2>Immutable Security &amp; Quorum Audit Trail</h2>
+            <span className="panel-kicker">TAMPER-EVIDENT CRYPTOGRAPHIC LEDGER</span>
+            <h3>Immutable Activity &amp; Quorum Audit Log</h3>
           </div>
           <span className="count-pill">{auditLog.length} signed events</span>
         </div>
@@ -579,11 +478,11 @@ export default function App() {
 
       <footer>
         <span>
-          ScholarLock — Built with <b>@tidecloak/react</b> for RMIT Industry Challenge:
-          Unlocked
+          <b>ScholarLock</b> — Zero-Trust Capstone &amp; Co-Research IP Vault · Built
+          with <code>@tidecloak/react</code>
         </span>
         <span>
-          Zero Master Key at Rest · 3-of-3 Threshold Quorum · Deadlock-Proof Ethics
+          No Master Key at Rest · 3-of-3 Threshold Quorum · Breach-Gated Ethics
           Arbitration
         </span>
       </footer>
