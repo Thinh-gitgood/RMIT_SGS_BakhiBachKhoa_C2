@@ -1,4 +1,8 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+
+const CERT_ID = "CERT-TIDE-RMIT-2026-303";
+const CERT_VERIFICATION_HASH =
+  "0x8e4b92f0c1d73a65e801b492c7d3f6a190e2b5c8d14f7a39e6b0c2d5f8a1e303";
 
 export default function QuorumDisputeView({
   coAuthors = [],
@@ -9,28 +13,173 @@ export default function QuorumDisputeView({
   onSignShard,
   certificateTimestamp,
 }) {
-  const linh = coAuthors.find((a) => a.id === "linh") || {
-    name: "Khánh Linh",
-    roleTitle: "AI Lead",
-    avatar: "KL",
-    shardLabel: "Shard 1/3",
-  };
-  const quan = coAuthors.find((a) => a.id === "quan") || {
-    name: "Trung Quân",
-    roleTitle: "Data Engineer",
-    avatar: "TQ",
-    shardLabel: "Shard 2/3",
-  };
-  const tan = coAuthors.find((a) => a.id === "tan") || {
-    name: "Nhật Tân",
-    roleTitle: "Rogue Member",
-    avatar: "NT",
-    shardLabel: "Shard 3/3 (Revocable)",
-  };
+  const [copiedHash, setCopiedHash] = useState(false);
+  const copyTimerRef = useRef(null);
 
-  const quorumCount = Object.values(signedShards).filter(Boolean).length;
+  const linh = coAuthors?.find((a) => a.id === "linh");
+  const quan = coAuthors?.find((a) => a.id === "quan");
+  const tan = coAuthors?.find((a) => a.id === "tan");
+
+  const quorumCount = Object.values(signedShards || {}).filter(Boolean).length;
   const isMasterUnlocked = quorumCount === 3;
   const progressPercent = Math.round((quorumCount / 3) * 100);
+  const issuedIso = certificateTimestamp || new Date().toISOString();
+
+  useEffect(() => {
+    if (!isMasterUnlocked) {
+      setCopiedHash(false);
+    }
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, [isMasterUnlocked]);
+
+  function buildCertificatePayload() {
+    return {
+      certificateId: CERT_ID,
+      schema: "TIDECLOAK_SOVEREIGN_IP_RELEASE_V1",
+      issuedAt: issuedIso,
+      verificationHash: CERT_VERIFICATION_HASH,
+      enclavePolicy: {
+        cipherSuite: "AES-256-GCM · TideCloak DKG",
+        thresholdScheme: "3-of-3 Emergent Authority",
+        masterKeyAtRest: null,
+        keyAssemblyLocation: "EPHEMERAL_IN_BROWSER_RAM_ONLY",
+      },
+      signatures: [
+        {
+          slot: "1/3",
+          signer: linh?.name || "Khánh Linh",
+          role: linh?.roleTitle || "AI Lead",
+          algorithm: "Ed25519",
+          signatureHash: "0x94a8f1c2...e71b309d",
+          status: "VERIFIED",
+        },
+        {
+          slot: "2/3",
+          signer: quan?.name || "Trung Quân",
+          role: quan?.roleTitle || "Data Engineer",
+          algorithm: "Ed25519",
+          signatureHash: "0x3c7d09b4...a82f614e",
+          status: "VERIFIED",
+        },
+        {
+          slot: "3/3 (Arbitration)",
+          signer: arbitrator?.name || "Dr. Cường Thịnh",
+          role: arbitrator?.roleTitle || "RMIT Ethics Chair & Academic Advisor",
+          algorithm: "Ed25519",
+          signatureHash: "0x7f12e5d9...c04a883b",
+          status: "VERIFIED_ARBITRATION_COSIGN",
+        },
+      ],
+      revocationRecord: {
+        revokedActor: `${tan?.name || "Nhật Tân"} (Co-Author · Shard 3/3)`,
+        status: "REVOKED",
+        reason: "HTTP 403 Unilateral Exfiltration Attempt",
+        auditProofCode: "403_UNILATERAL_EXFILTRATION_BLOCKED",
+        enforcedBy: arbitrator?.name || "Dr. Cường Thịnh",
+      },
+      unlockedAssets: [
+        "research_paper_final.pdf [_tide_ip-paper]",
+        "brain_cancer_model.pth [_tide_ip-weights]",
+        "confidential_patient_dataset.csv [_tide_ip-dataset]",
+      ],
+    };
+  }
+
+  function handleDownloadCertificate() {
+    const payload = buildCertificatePayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${CERT_ID}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleCopyVerificationHash() {
+    const summaryText = `${CERT_ID} | Hash: ${CERT_VERIFICATION_HASH} | Signers: Khánh Linh (0x94a8...309d), Trung Quân (0x3c7d...614e), Dr. Cường Thịnh (0x7f12...883b) | REVOKED: Nhật Tân (Reason: HTTP 403 Unilateral Exfiltration Attempt)`;
+    try {
+      await navigator.clipboard.writeText(summaryText);
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = summaryText;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+    }
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    setCopiedHash(true);
+    copyTimerRef.current = setTimeout(() => setCopiedHash(false), 2000);
+  }
+
+  const combinerShards = [
+    {
+      id: "shard-1",
+      title: "Khánh Linh · Shard 1/3",
+      signed: Boolean(signedShards?.linh),
+      value: signedShards?.linh ? "✓ 0x94a8...309d" : "🔒 Shard #1 Pending",
+      border: signedShards?.linh ? "1.5px solid #10b981" : "1px dashed #cbd5e1",
+      bg: signedShards?.linh ? "#e5f7ef" : "#ffffff",
+      titleColor: signedShards?.linh ? "#065f46" : "#475569",
+      valueColor: signedShards?.linh ? "#0b7a56" : "#64748b",
+    },
+    {
+      id: "shard-2",
+      title: "Trung Quân · Shard 2/3",
+      signed: Boolean(signedShards?.quan),
+      value: signedShards?.quan ? "✓ 0x3c7d...614e" : "🔒 Shard #2 Pending",
+      border: signedShards?.quan ? "1.5px solid #10b981" : "1px dashed #cbd5e1",
+      bg: signedShards?.quan ? "#e5f7ef" : "#ffffff",
+      titleColor: signedShards?.quan ? "#065f46" : "#475569",
+      valueColor: signedShards?.quan ? "#0b7a56" : "#64748b",
+    },
+    {
+      id: "shard-3",
+      title: "Shard 3/3 · Arb. / Co-Author",
+      signed: Boolean(signedShards?.thinh),
+      value: signedShards?.thinh
+        ? "✓ 0x7f12...883b"
+        : rogueBreachLogged
+          ? "⚡ Arbitration Slot Ready (Dr. Thịnh)"
+          : "⚠️ Nhật Tân Holding Out (Deadlock Risk)",
+      border: signedShards?.thinh
+        ? "1.5px solid #10b981"
+        : rogueBreachLogged
+          ? "1.5px solid #60a5fa"
+          : "1px dashed #f59e0b",
+      bg: signedShards?.thinh
+        ? "#e5f7ef"
+        : rogueBreachLogged
+          ? "#eff6ff"
+          : "#fffbeb",
+      titleColor: signedShards?.thinh
+        ? "#065f46"
+        : rogueBreachLogged
+          ? "#1e40af"
+          : "#92400e",
+      valueColor: signedShards?.thinh
+        ? "#0b7a56"
+        : rogueBreachLogged
+          ? "#1d4ed8"
+          : "#b45309",
+    },
+  ];
+
+  const certSigners = [
+    { label: `1/3 · ${linh?.name || "Khánh Linh"}`, hash: "0x94a8f1c2...e71b309d" },
+    { label: `2/3 · ${quan?.name || "Trung Quân"}`, hash: "0x3c7d09b4...a82f614e" },
+    {
+      label: `3/3 · ${arbitrator?.name || "Dr. Cường Thịnh"}`,
+      hash: "0x7f12e5d9...c04a883b",
+    },
+  ];
 
   return (
     <aside className="quorum-column">
@@ -41,12 +190,16 @@ export default function QuorumDisputeView({
             <span className="panel-kicker">EMERGENT AUTHORITY CONSENSUS ENGINE</span>
             <h2>🔐 3-of-3 Release Quorum</h2>
           </div>
-          <span className={`status-pill ${isMasterUnlocked ? "emerald" : "amber"}`}>
+          <span
+            className={`status-pill ${isMasterUnlocked ? "emerald" : "amber"}`}
+            role="status"
+            aria-atomic="true"
+          >
             {isMasterUnlocked ? "⚡ 3/3 Unlocked" : `${quorumCount}/3 Shards`}
           </span>
         </div>
 
-        {/* 3/3 Key Assembly Meter */}
+        {/* 3/3 Progress Bar + 3-Shard Cryptographic Key Combiner */}
         <div className="quorum-meter-box">
           <div className="quorum-meter-labels">
             <span>
@@ -72,6 +225,120 @@ export default function QuorumDisputeView({
               3/3 (Unlocked)
             </span>
           </div>
+
+          {/* Feature 1: 3-Shard Cryptographic Key Combiner Diagram */}
+          <div
+            style={{
+              marginTop: "10px",
+              paddingTop: "9px",
+              borderTop: "1px dashed #cbd5e1",
+            }}
+            aria-label="3-Shard Cryptographic Key Combiner"
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "9.5px",
+                fontWeight: 800,
+                letterSpacing: "0.4px",
+                color: "#475569",
+                textTransform: "uppercase",
+                marginBottom: "6px",
+              }}
+            >
+              <span>🧩 3-Shard Key Combiner</span>
+              <span style={{ whiteSpace: "nowrap" }}>DKG: 3/3</span>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gap: "5px",
+              }}
+            >
+              {combinerShards.map((shard) => (
+                <div
+                  key={shard.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "5px 8px",
+                    borderRadius: "6px",
+                    border: shard.border,
+                    background: shard.bg,
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      color: shard.titleColor,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {shard.title}
+                  </span>
+                  <code
+                    style={{
+                      fontSize: "9.5px",
+                      fontWeight: 700,
+                      color: shard.valueColor,
+                      textAlign: "right",
+                    }}
+                  >
+                    {shard.value}
+                  </code>
+                </div>
+              ))}
+            </div>
+
+            {/* Combiner Funnel Connector */}
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "9.5px",
+                fontWeight: 800,
+                color: isMasterUnlocked ? "#059669" : "#64748b",
+                margin: "5px 0 4px",
+                letterSpacing: "0.2px",
+              }}
+            >
+              ▼ In-Browser Key Assembly (Ephemeral AES-256-GCM Key) ▼
+            </div>
+
+            {/* Combined Output Box */}
+            <div
+              style={{
+                padding: "7px 10px",
+                borderRadius: "7px",
+                textAlign: "center",
+                fontSize: "10px",
+                fontWeight: 800,
+                lineHeight: 1.35,
+                border: isMasterUnlocked
+                  ? "1.5px solid #10b981"
+                  : "1px solid #cbd5e1",
+                background: isMasterUnlocked
+                  ? "linear-gradient(135deg, #065f46, #0b7a56)"
+                  : "#e2e8f0",
+                color: isMasterUnlocked ? "#ffffff" : "#475569",
+                boxShadow: isMasterUnlocked
+                  ? "0 3px 10px rgba(16, 185, 129, 0.22)"
+                  : "none",
+                transition: "all 0.25s ease",
+              }}
+            >
+              {isMasterUnlocked
+                ? "⚡ EPHEMERAL KEY RECONSTRUCTED IN RAM (Zero Server Custody)"
+                : `🔒 Key Unformed (${quorumCount}/3 Shards) — No Master Key Exists at Rest`}
+            </div>
+          </div>
         </div>
 
         {/* 3 Signature Slots */}
@@ -84,28 +351,14 @@ export default function QuorumDisputeView({
           >
             <div className="slot-top">
               <div className="slot-person">
-                <span className={`avatar mini ${signedShards.linh ? "signed-avatar" : ""}`}>
-                  {linh.avatar}
+                <span
+                  className={`avatar mini ${signedShards.linh ? "signed-avatar" : ""}`}
+                >
+                  {linh?.avatar}
                 </span>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <strong>👩‍🔬 {linh.name}</strong>
-                    {activeUser?.id === "linh" && (
-                      <span
-                        style={{
-                          fontSize: "9px",
-                          fontWeight: 800,
-                          background: "#e0f2fe",
-                          color: "#0369a1",
-                          padding: "1px 5px",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        YOU
-                      </span>
-                    )}
-                  </div>
-                  <small>{linh.roleTitle} · Shard 1/3</small>
+                  <strong>👩‍🔬 {linh?.name}</strong>
+                  <small>{linh?.roleTitle} · Shard 1/3</small>
                 </div>
               </div>
               <span className={`shard-state ${signedShards.linh ? "signed" : "pending"}`}>
@@ -150,28 +403,14 @@ export default function QuorumDisputeView({
           >
             <div className="slot-top">
               <div className="slot-person">
-                <span className={`avatar mini ${signedShards.quan ? "signed-avatar" : ""}`}>
-                  {quan.avatar}
+                <span
+                  className={`avatar mini ${signedShards.quan ? "signed-avatar" : ""}`}
+                >
+                  {quan?.avatar}
                 </span>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <strong>👨‍💻 {quan.name}</strong>
-                    {activeUser?.id === "quan" && (
-                      <span
-                        style={{
-                          fontSize: "9px",
-                          fontWeight: 800,
-                          background: "#e0f2fe",
-                          color: "#0369a1",
-                          padding: "1px 5px",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        YOU
-                      </span>
-                    )}
-                  </div>
-                  <small>{quan.roleTitle} · Shard 2/3</small>
+                  <strong>👨‍💻 {quan?.name}</strong>
+                  <small>{quan?.roleTitle} · Shard 2/3</small>
                 </div>
               </div>
               <span className={`shard-state ${signedShards.quan ? "signed" : "pending"}`}>
@@ -220,14 +459,9 @@ export default function QuorumDisputeView({
           >
             {/* Original Shard 3 Holder Status (Nhật Tân) */}
             <div className="rogue-slot-status">
-              <div>
-                <span>
-                  🚨 <b>{tan.name}</b>
-                </span>
-                <small style={{ display: "block", fontSize: "10px", color: "var(--muted)" }}>
-                  Original Co-Author · Shard 3/3
-                </small>
-              </div>
+              <span>
+                🚨 <b>{tan?.name}</b> (Shard 3/3)
+              </span>
               <span
                 className={`rogue-status-chip ${
                   signedShards.thinh
@@ -236,6 +470,7 @@ export default function QuorumDisputeView({
                       ? "breach"
                       : "hostile"
                 }`}
+                style={{ whiteSpace: "nowrap" }}
               >
                 {signedShards.thinh
                   ? "🚫 SHARD REVOKED"
@@ -251,27 +486,13 @@ export default function QuorumDisputeView({
                 <span
                   className={`avatar mini ${signedShards.thinh ? "signed-avatar" : ""}`}
                 >
-                  {arbitrator.avatar || "CT"}
+                  {arbitrator?.avatar}
                 </span>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <strong>⚖️ {arbitrator.name}</strong>
-                    {activeUser?.id === "thinh" && (
-                      <span
-                        style={{
-                          fontSize: "9px",
-                          fontWeight: 800,
-                          background: "#e0f2fe",
-                          color: "#0369a1",
-                          padding: "1px 5px",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        YOU
-                      </span>
-                    )}
-                  </div>
-                  <small>Ethics Arbitrator · Arbitration Shard 3/3</small>
+                  <strong style={{ whiteSpace: "nowrap" }}>
+                    ⚖️ {arbitrator?.name}
+                  </strong>
+                  <small>Ethics Arbitrator · Shard 3/3</small>
                 </div>
               </div>
               <span
@@ -298,6 +519,56 @@ export default function QuorumDisputeView({
                   ? "⚡ Breach Logged in Audit Trail — Ethics Arbitration Unlocked! Dr. Cường Thịnh can now revoke Nhật Tân & sign 3/3."
                   : "🔒 Dormant Guardrail: Only unlocks if an immutable 403 breach is logged (prevents collusion against an innocent co-author)."}
             </p>
+
+            {/* Feature 2: 3 Cryptographic Guardrails on Slot 3 */}
+            <div
+              style={{
+                background: signedShards.thinh
+                  ? "#e8f8f0"
+                  : rogueBreachLogged
+                    ? "#eff6ff"
+                    : "#f1f5f9",
+                border: signedShards.thinh
+                  ? "1px solid #a7f3d0"
+                  : rogueBreachLogged
+                    ? "1px solid #bfdbfe"
+                    : "1px solid #cbd5e1",
+                borderRadius: "7px",
+                padding: "7px 9px",
+                marginBottom: "9px",
+                fontSize: "10px",
+                lineHeight: 1.4,
+                color: "#1e293b",
+              }}
+            >
+              <div
+                style={{
+                  fontWeight: 800,
+                  fontSize: "9.5px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  color: "#334155",
+                  marginBottom: "4px",
+                }}
+              >
+                ⚖️ 3 Cryptographic Anti-Collusion Guardrails:
+              </div>
+              <div style={{ display: "grid", gap: "3px" }}>
+                <div>
+                  <b>🛡️ Guardrail 1 — 1/3 Shard Only:</b> Advisor holds no Master
+                  Key &amp; cannot read student Working Previews.
+                </div>
+                <div>
+                  <b>🔒 Guardrail 2 — Anti-Collusion Dormant Lock:</b> Hard-locked (
+                  <code>DORMANT</code>) until an immutable <code>403</code> breach
+                  is logged in the Audit Log.
+                </div>
+                <div>
+                  <b>📜 Guardrail 3 — Public Accountability:</b> Revocation of Nhật
+                  Tân’s shard is permanently sealed into the Release Certificate.
+                </div>
+              </div>
+            </div>
 
             {signedShards.thinh ? (
               <div>
@@ -338,7 +609,7 @@ export default function QuorumDisputeView({
           </div>
         </div>
 
-        {/* Verified IP Release Certificate (Displayed as soon as 3/3 is signed) */}
+        {/* Feature 3: Upgraded Verified IP Release Certificate (CERT-TIDE-RMIT-2026-303) */}
         {isMasterUnlocked && (
           <div
             className="certificate-compact"
@@ -350,7 +621,7 @@ export default function QuorumDisputeView({
                 <span className="cert-kicker">
                   📜 TIDECLOAK SOVEREIGN RELEASE CERTIFICATE
                 </span>
-                <h3>CERT-TIDE-RMIT-2026-303</h3>
+                <h3>{CERT_ID}</h3>
               </div>
               <span className="cert-verified-badge">3/3 VERIFIED</span>
             </div>
@@ -359,17 +630,89 @@ export default function QuorumDisputeView({
               <code>doDecrypt()</code>. All 3 Capstone IP files are unlocked for
               IEEE publication &amp; licensed deployment.
             </p>
+
+            {/* 3 Ed25519 Signatures Table */}
+            <div
+              style={{
+                background: "#ffffff",
+                border: "1px solid #a7f3d0",
+                borderRadius: "7px",
+                padding: "7px 9px",
+                marginBottom: "8px",
+                fontSize: "10px",
+                display: "grid",
+                gap: "4px",
+              }}
+            >
+              {certSigners.map((sig) => (
+                <div
+                  key={sig.label}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: "6px",
+                  }}
+                >
+                  <span>
+                    <b>{sig.label}</b> (Ed25519):
+                  </span>
+                  <code style={{ color: "#0b7a56", fontWeight: 700 }}>
+                    {sig.hash} ✓
+                  </code>
+                </div>
+              ))}
+              <div
+                style={{
+                  borderTop: "1px dashed #cbd5e1",
+                  paddingTop: "4px",
+                  marginTop: "2px",
+                  color: "#be123c",
+                  fontWeight: 700,
+                }}
+              >
+                🚫 REVOKED: {tan?.name || "Nhật Tân"} (Reason: HTTP 403 Unilateral
+                Exfiltration Attempt)
+              </div>
+            </div>
+
             <div className="cert-compact-meta">
               <span>
-                <b>Co-Signers:</b> Khánh Linh (1/3), Trung Quân (2/3), Dr. Cường Thịnh (3/3)
+                <b>Verification Hash:</b>{" "}
+                <code>{CERT_VERIFICATION_HASH.slice(0, 18)}...e303</code>
               </span>
               <span>
-                <b>Revoked:</b> Nhật Tân (403 Breach) ·{" "}
-                {(certificateTimestamp || new Date().toISOString()).slice(11, 19)} UTC
+                <b>Timestamp:</b> {issuedIso.slice(11, 19)} UTC · Zero Server
+                Custody
               </span>
               <span>
                 <b>Enclave Security:</b> Zero Master Key at Rest · Ed25519 Verified Signatures
               </span>
+            </div>
+
+            {/* Interactive Certificate Action Buttons */}
+            <div
+              style={{
+                display: "flex",
+                gap: "7px",
+                marginTop: "9px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                className="button emerald-btn btn-sm"
+                style={{ flex: 1 }}
+                onClick={handleDownloadCertificate}
+              >
+                ⬇️ Download Certificate (.json)
+              </button>
+              <button
+                type="button"
+                className="button outline btn-sm"
+                onClick={handleCopyVerificationHash}
+              >
+                {copiedHash ? "✓ Copied Hash!" : "📋 Copy Verification Hash"}
+              </button>
             </div>
           </div>
         )}
