@@ -1,125 +1,71 @@
-# 🚀 TASK.md — Kế Hoạch Tác Chiến Ca Chiều (14:15 – 18:00): ScholarLock
+# 🚀 TASK.md — Tổng Chỉ Huy Phân Công 4 Thành Viên (Zero-Conflict Master Plan)
 
 **Dự án:** **ScholarLock — Zero-Trust Capstone & Co-Research IP Vault**  
 **Cuộc thi:** RMIT Industry Challenge: Unlocked (Tide / RMIT University)  
-**Công nghệ lõi:** **TideCloak (`@tidecloak/react`)** & **Emergent Authority (Thẩm quyền phái sinh 3/3 Shards)**  
-**PM / Integration / Submission Gatekeeper:** **Cường Thịnh**  
-**3 Thành viên thực thi (Ca chiều):** **Khánh Linh**, **Trung Quân**, **Nhật Tân**
+**Công nghệ lõi:** **TideCloak (`@tidecloak/react`)** & **Emergent Authority (3-of-3 Threshold Shards)**
 
 ---
 
-## 📌 1. Kiến Trúc "Real Working App" (4 Tính Năng Cốt Lõi — Gọn Sạch Như GitHub / Google Drive)
+## ⚡ Cách Chạy Nhanh Cho Từng Thành Viên (1-Click AI Agent Execution)
 
-Ứng dụng **ScholarLock** được thiết kế như một **Workspace quản lý File đồ án thực thụ** (không phải slide thuyết trình nhiều chữ), tập trung vào **4 tính năng trực quan trên cùng 1 màn hình**:
+Mỗi thành viên đã có **1 file nhiệm vụ riêng biệt** trong thư mục `tasks/` với **ranh giới file độc quyền 100% (kể cả `style.css`)** để cả 4 người cùng chạy AI Agent và push code lên Git mà **không bao giờ bị Merge Conflict**:
 
-1. **Tính năng 1 — Thanh Chuyển Đổi Tài Khoản (`Active Account Switcher`) + `Log in with TideCloak` (`src/App.jsx`):**
-   - Cho phép chuyển nhanh giữa 5 tài khoản thực tế:
-     - `👩‍🔬 Khánh Linh (AI Lead · 1/3)`
-     - `👨‍💻 Trung Quân (Data Eng · 2/3)`
-     - `🚨 Nhật Tân (Co-Author · 3/3)`
-     - `⚖️ Dr. Cường Thịnh (Ethics Advisor)`
-     - `🖥️ RMIT IT Admin (Server DB)`
-2. **Tính năng 2 — Kho File Đồ Án (`📁 Project IP Vault`) + Nút `⬇️ Export` Thực Tế (`src/components/CoAuthorVaultView.jsx` & `src/components/RogueAttackView.jsx`):**
-   - Cột bên trái hiển thị 3 file đồ án (`research_paper_final.pdf`, `brain_cancer_model.pth`, `confidential_patient_dataset.csv`) cùng nút **`👁️ Preview`** và **`⬇️ Export Full IP Bundle`**.
-   - Khi **Nhật Tân** bấm **`⬇️ Export`** lúc chưa đủ 3/3 chữ ký $\rightarrow$ Bị chặn đứng ngay lập tức với Popup **`403 UNILATERAL_EXFILTRATION_BLOCKED`** (`RogueAttackView.jsx`) và tự động ghi bằng chứng vi phạm vào **Activity Log**!
-   - Khi chuyển sang **Dr. Cường Thịnh**, ông không thể đọc trộm file của sinh viên (`🔒 Advisor Cannot Read`).
-3. **Tính năng 3 — Bảng Chữ Ký Đồng Thuận 3/3 (`🔐 3-of-3 Release Quorum`) & Chứng Chỉ Bản Quyền (`src/components/QuorumDisputeView.jsx`):**
-   - Nằm ngay cột bên phải (nhìn thấy đồng thời cả danh sách File và 3 ô ký tên):
-     - **Slot 1:** `👩‍🔬 Khánh Linh` — Nút `✍️ Sign Approval (1/3)`
-     - **Slot 2:** `👨‍💻 Trung Quân` — Nút `✍️ Sign Approval (2/3)`
-     - **Slot 3 (Dynamic Dispute Slot):** Bình thường **Dr. Cường Thịnh** bị khóa cứng (`🔒 Locked — No Breach Logged`) để chống thông đồng. Ngay sau khi Nhật Tân bấm Export bị lỗi `403`, Slot 3 tự động mở khóa nút **`⚖️ Revoke Nhật Tân & Sign (3/3)`**!
-   - Khi đủ `3/3`, khóa giải mã tạm thời được ghép ngay trên trình duyệt (`doDecrypt`), cả 3 file bên trái chuyển sang **`🔓 Unlocked (3/3 Verified)`** và cấp **Chứng chỉ `CERT-TIDE-RMIT-2026-303`**!
-4. **Tính năng 4 — Giao Diện Database Máy Chủ Mù (`🗄️ Raw Server Database View` — `src/components/BlindServerView.jsx`):**
-   - Khi chọn tài khoản **`🖥️ RMIT IT Admin (Server DB)`**, màn hình hiển thị bảng PostgreSQL / S3 Inspector chứng minh cả 3 file dưới server chỉ là chuỗi mã hóa mù `AES-256-GCM (TIDE_E2EE_V1)`. Bấm **`⛔ Force Decrypt / Export DB`** bị chặn ngay với lỗi **`403 ZERO_CUSTODY_ENFORCED`** (`0/3 Shards`).
-
----
-
-## 📊 Bảng Phân Quyền Sở Hữu File (Zero-Conflict Matrix)
-
-| Thành viên (Gợi ý gán Role) | Role đảm nhận | File ĐƯỢC PHÉP sửa / tạo (Độc quyền 100%) | File CẤM đụng vào |
+| Thành viên | File Nhiệm Vụ Chi Tiết | File Code Độc Quyền Được Sửa | Lệnh Gõ Vào AI Agent Của Bạn |
 | :--- | :--- | :--- | :--- |
-| **Thành viên 1** *(VD: Nhật Tân)* | **👩‍🎨 ROLE 1 — Red-Team Alert & Server DB UX Engineer** | `src/components/RogueAttackView.jsx`<br>`src/components/BlindServerView.jsx` | `src/App.jsx`, `QuorumDisputeView.jsx`, `CoAuthorVaultView.jsx` |
-| **Thành viên 2** *(VD: Khánh Linh)* | **⚡ ROLE 2 — File Vault & 3/3 Quorum Panel UX Engineer** | `src/components/CoAuthorVaultView.jsx`<br>`src/components/QuorumDisputeView.jsx` | `src/App.jsx`, `RogueAttackView.jsx`, `BlindServerView.jsx` |
-| **Thành viên 3** *(VD: Trung Quân)* | **🎬 ROLE 3 — Demo Director, Pitch Slides & Video Producer** | `docs/pitch_slides.html` *(tạo mới)*<br>`public/tidecloak.json` *(tùy chọn)*<br>`scholar_lock_demo.mp4` *(file video xuất ra)* | Toàn bộ thư mục `src/` của Role 1 & Role 2 |
-| **Leader: Cường Thịnh** | **🧭 PM, Code Reviewer & Final Integrator** | Điều phối merge, kiểm tra `npm run build`, duyệt video & nộp bài | Hỗ trợ gỡ rối khi cần |
+| 🧭 **Cường Thịnh** | [`tasks/TASK_CUONG_THINH.md`](tasks/TASK_CUONG_THINH.md) | `src/App.jsx`<br>`src/seed.json`<br>`src/style.css` | `Hãy đọc file tasks/TASK_CUONG_THINH.md và thực thi toàn bộ nhiệm vụ được giao trong đó (sử dụng các skill được gợi ý).` |
+| 👩‍🔬 **Khánh Linh** | [`tasks/TASK_KHANH_LINH.md`](tasks/TASK_KHANH_LINH.md) | `src/components/CoAuthorVaultView.jsx` | `Hãy đọc file tasks/TASK_KHANH_LINH.md và thực thi toàn bộ nhiệm vụ được giao trong đó (sử dụng các skill được gợi ý).` |
+| 👨‍💻 **Trung Quân** | [`tasks/TASK_TRUNG_QUAN.md`](tasks/TASK_TRUNG_QUAN.md) | `src/components/QuorumDisputeView.jsx` | `Hãy đọc file tasks/TASK_TRUNG_QUAN.md và thực thi toàn bộ nhiệm vụ được giao trong đó (sử dụng các skill được gợi ý).` |
+| 🚨 **Nhật Tân (PM)** | [`tasks/TASK_NHAT_TAN.md`](tasks/TASK_NHAT_TAN.md) | `src/components/RogueAttackView.jsx`<br>`src/components/BlindServerView.jsx`<br>`docs/pitch_slides.html` | `Hãy đọc file tasks/TASK_NHAT_TAN.md và thực thi toàn bộ nhiệm vụ được giao trong đó (sử dụng các skill được gợi ý).` |
 
 ---
 
-## 🛠️ 2. Phân Công Chi Tiết 3 Role Độc Lập (Zero Code Conflict)
+## 🎙️ Kịch Bản Quay Video 2 Phút (120 Giây) Chuẩn Từng Khung Hình & Lời Thoại Tiếng Anh
 
-### 👩‍🎨 ROLE 1 — Red-Team Alert & Server DB UX Engineer
-- **File độc quyền:** `src/components/RogueAttackView.jsx` và `src/components/BlindServerView.jsx`.
-- **Nhiệm vụ:**
-  1. Trong `RogueAttackView.jsx`: Chăm chút khung cảnh báo đỏ `403 UNILATERAL_EXFILTRATION_BLOCKED` hiện ra ngay khi Nhật Tân bấm nút Export trái phép (nổi bật thông số `1 / 3 SHARDS PRESENT` và JSON payload).
-  2. Trong `BlindServerView.jsx`: Làm đẹp bảng Terminal Database Inspector của `RMIT IT Admin` và thông báo lỗi `403 ZERO_CUSTODY_ENFORCED` khi bấm nút `⛔ Force Decrypt / Export DB`.
+> **💡 Mẹo quay mượt nhất:**  
+> - Bấm phím **`1` – `5`** (do Cường Thịnh tích hợp) hoặc click lên thanh **ACTIVE ACCOUNT** trên cùng để chuyển góc nhìn tức thì.  
+> - Mở `docs/pitch_slides.html` (do Nhật Tân tạo) ở Tab trình duyệt thứ 1 để quay 15s đầu và 15s cuối; mở `http://localhost:5173` ở Tab trình duyệt thứ 2 (Zoom `110%`–`125%`, Fullscreen `F11`) để quay phần tương tác.
 
-#### 📋 Prompt mẫu Copy-Paste cho Role 1:
-```text
-Sử dụng skill ui-ux-pro-max, ui-styling và ponytail:
-Hãy tinh chỉnh giao diện cho CHỈ 2 file: src/components/RogueAttackView.jsx và src/components/BlindServerView.jsx (không sửa file khác và giữ nguyên toàn bộ props hiện có).
-1. Trong RogueAttackView.jsx: Làm cho hộp cảnh báo 403 UNILATERAL_EXFILTRATION_BLOCKED (hiện ra khi Nhật Tân bấm Export trái phép) thật sắc nét, nổi bật rõ "1 / 3 SHARDS PRESENT" và JSON lỗi.
-2. Trong BlindServerView.jsx: Làm cho bảng Raw Server Database View của RMIT IT Admin trông như một Cloud DB Inspector thực thụ (hiển thị rõ 100% Blind Ciphertext TIDE_E2EE_V1 và cảnh báo 403 ZERO_CUSTODY_ENFORCED khi bấm Force Decrypt).
-Kiểm tra chạy npm run build thành công.
-```
-
----
-
-### ⚡ ROLE 2 — File Vault & 3/3 Quorum Panel UX Engineer
-- **File độc quyền:** `src/components/CoAuthorVaultView.jsx` và `src/components/QuorumDisputeView.jsx`.
-- **Nhiệm vụ:**
-  1. Trong `CoAuthorVaultView.jsx`: Tinh chỉnh danh sách 3 file (`research_paper_final.pdf`, `brain_cancer_model.pth`, `confidential_patient_dataset.csv`), nút `👁️ Preview`, nút `⬇️ Export Full IP Bundle` và hiệu ứng chuyển sang màu xanh `🔓 Unlocked (3/3 Verified)` khi đủ 3/3 chữ ký.
-  2. Trong `QuorumDisputeView.jsx`: Tinh chỉnh cột `🔐 3-of-3 Release Quorum` bên phải (thanh tiến trình `0/3 -> 1/3 -> 2/3 -> 3/3`, hiệu ứng Slot 3 chuyển từ `🔒 DORMANT` sang `⚡ UNLOCKED` khi Nhật Tân vi phạm, và thẻ chứng chỉ `CERT-TIDE-RMIT-2026-303`).
-
-#### 📋 Prompt mẫu Copy-Paste cho Role 2:
-```text
-Sử dụng skill ui-ux-pro-max, ui-styling và ponytail:
-Hãy tinh chỉnh giao diện cho CHỈ 2 file: src/components/CoAuthorVaultView.jsx và src/components/QuorumDisputeView.jsx (không sửa file khác và giữ nguyên toàn bộ props hiện có).
-1. Trong CoAuthorVaultView.jsx: Làm cho danh sách 3 file đồ án và nút "⬇️ Export Full IP Bundle" trông gọn gàng, hiện đại như GitHub Releases / Google Drive, và sáng bừng màu xanh ngọc khi mở khóa đủ 3/3.
-2. Trong QuorumDisputeView.jsx: Làm nổi bật 3 ô ký tên (Slot 1 Khánh Linh, Slot 2 Trung Quân, Slot 3 Dr. Cường Thịnh tự động mở khóa từ trạng thái Dormant sau khi Nhật Tân vi phạm 403) và thẻ chứng chỉ CERT-TIDE-RMIT-2026-303.
-Kiểm tra chạy npm run build thành công.
-```
-
----
-
-### 🎬 ROLE 3 — Demo Director, Pitch Slides & Video Producer
-- **File độc quyền:** `docs/pitch_slides.html` và video `scholar_lock_demo.mp4` (`< 100MB`, $\le 2$ phút).
-- **Nhiệm vụ:**
-  1. Tạo `docs/pitch_slides.html` (2-3 slide ngắn gọn cho 15s đầu và 15s cuối video).
-  2. Quay màn hình ứng dụng hoạt động thực tế + lồng tiếng Anh theo đúng kịch bản 120 giây bên dưới.
-
----
-
-## 🎙️ 3. Kịch Bản Quay Video 2 Phút (120 Giây) — Thao Tác Như App Thật 100%
-
-### ⏱️ Phân Cảnh 1 (0:00 – 0:20) | Giới thiệu Workspace & Quyền Xem Hàng Ngày
-- **🖥️ Thao tác trên màn hình:**
-  - Đang ở tài khoản **`👩‍🔬 Khánh Linh (AI Lead · 1/3)`**.
-  - Bấm nhẹ **`👁️ Preview`** ở file `brain_cancer_model.pth` để xem thông số mô hình hàng ngày, trong khi cột bên phải hiện rõ **`0/3 Shards`** (chưa thể xuất file gốc).
+### ⏱️ Scene 1 (0:00 – 0:20) | The Problem: Insider Theft & Co-Author Hostage
+- **🖥️ Trên màn hình:** Mở Slide 1 của `docs/pitch_slides.html` (0:00–0:10), sau đó chuyển sang giao diện **ScholarLock** đang ở tài khoản **Khánh Linh (`[1]`)**, bấm `👁️ Preview` trên file `brain_cancer_model.pth` để cho thấy Lớp 1 (Working Preview) mở được nhưng Lớp 2 (Full Export) bị khóa bởi `3/3 Quorum`.
 - **🎙️ Voiceover (English — 20s):**
-  > *"Meet **ScholarLock**, a zero-trust academic IP vault built on **TideCloak**. Co-authors **Khánh Linh**, **Trung Quân**, and **Nhật Tân** are building a 96.4% accuracy brain cancer AI model. In their daily workspace, co-authors can preview working metadata via TideCloak tags—but no single person or server holds a master key to export the raw IP bundle."*
+  > *"University research teams face a critical security paradox. Meet our RMIT Capstone team: **Khánh Linh**, **Trung Quân**, and **Nhật Tân**, building a 96.4% accuracy brain cancer AI model. How do they collaborate daily without letting a rogue member steal the model weights—or hold the entire team hostage by refusing to sign off? And how do we ensure even **RMIT IT Admins** cannot peek at unpublished breakthroughs? Welcome to **ScholarLock**, powered by **TideCloak**."*
 
-### ⏱️ Phân Cảnh 2 (0:20 – 0:55) | Nhật Tân Bấm Export Bán Trộm & IT Admin Xem DB Mù
-- **🖥️ Thao tác trên màn hình:**
-  - `0:20–0:38`: Trên thanh tài khoản, bấm chuyển sang **`🚨 Nhật Tân (Co-Author · 3/3)`**. Bấm ngay nút **`🚨 ⬇️ Export Full IP Bundle (Unilateral)`**!
-  - Ngay lập tức, khung đỏ **`403 UNILATERAL_EXFILTRATION_BLOCKED`** bung ra (`1/3 Shards Present`), và nhìn sang cột phải: **Slot 3 của Dr. Cường Thịnh** lập tức chuyển từ `🔒 DORMANT` sang **`⚡ UNLOCKED`**!
-  - `0:38–0:55`: Bấm chuyển tài khoản sang **`🖥️ RMIT IT Admin (Server DB)`**. Chỉ vào bảng Ciphertext mù và bấm **`⛔ Force Decrypt / Export DB`** $\rightarrow$ Hiện lỗi **`403 ZERO_CUSTODY_ENFORCED`** (`0/3 Shards`).
-- **🎙️ Voiceover (English — 35s):**
-  > *"Suppose **Nhật Tân** goes rogue and clicks **Export** to steal and sell the AI weights. TideCloak blocks him instantly with **403 Unilateral Exfiltration Blocked** because he holds only **one of three** threshold shards. Crucially, this immutable breach log automatically unlocks Ethics Arbitration in Slot 3.*  
-  > *Even if we switch to **RMIT IT Admin**, the database stores pure **AES-256-GCM ciphertext**. Clicking **Force Decrypt** fails with **Zero Custody Enforced**—because the server holds **zero shards**."*
+### ⏱️ Scene 2 (0:20 – 0:50) | Flow 1 & Flow 2: Rogue Insider & Blind Server Blocked
+- **🖥️ Trên màn hình:**
+  - `0:20–0:35`: Bấm sang tài khoản **🚨 Nhật Tân (`[3]`)**, click nút đỏ **"🚨 ⬇️ Export Full IP Bundle (Unilateral)"** $\rightarrow$ Cảnh báo đỏ **`403 UNILATERAL_EXFILTRATION_BLOCKED`** bung ra kèm bảng `1/3 vs 3/3 Shards` và ghi vào **Immutable Audit Log**.
+  - `0:35–0:50`: Bấm sang tài khoản **🖥️ RMIT IT Admin (`[5]`)**, chuyển qua lại giữa `PostgreSQL Table View` và `Raw S3 Ciphertext Dump`, rồi bấm **"⛔ Force Decrypt / Export DB"** $\rightarrow$ Hiện cảnh báo **`403 ZERO_CUSTODY_ENFORCED`**.
+- **🎙️ Voiceover (English — 30s):**
+  > *"First, suppose co-author **Nhật Tân** goes rogue and tries to export the full AI weights and patient dataset to sell to an outside company. When he clicks export, **TideCloak** blocks him instantly with **403 Unilateral Exfiltration Blocked**. Why? Because no single user holds a master key—Nhật Tân holds only **one of three** required authority shards, and his breach attempt is cryptographically sealed into the **Immutable Audit Log**.*  
+  > *Even if we switch to the **RMIT IT Admin Database view**, the server stores pure **AES-256-GCM ciphertext**. An Admin Override fails with **Zero Custody Enforced**—because the server holds **zero shards**."*
 
-### ⏱️ Phân Cảnh 3 (0:55 – 1:40) | Ký Đủ 3/3 Ngay Trên Cột Phải & Xuất Bản Thành Công
-- **🖥️ Thao tác trên màn hình:**
-  - Bấm quay lại Vault (`👩‍🔬 Khánh Linh`). Nhìn sang cột phải **`🔐 3-of-3 Release Quorum`**:
-    1. Bấm **`✍️ Sign Approval (1/3)`** (Khánh Linh) $\rightarrow$ Thanh tiến trình lên `1/3`.
-    2. Bấm **`✍️ Sign Approval (2/3)`** (Trung Quân) $\rightarrow$ Thanh tiến trình lên `2/3`.
-    3. Bấm **`⚖️ Revoke Nhật Tân & Sign (3/3)`** (Dr. Cường Thịnh) $\rightarrow$ Thanh tiến trình đạt **`3/3 Unlocked`**!
-  - Ngay lập tức, cả 3 file bên trái chuyển sang màu xanh **`🔓 Unlocked (3/3 Verified)`** hiện rõ Plaintext, và chứng chỉ **`CERT-TIDE-RMIT-2026-303`** xuất hiện! Bấm **`⬇️ Export Full IP Bundle (3/3 Unlocked)`**.
+### ⏱️ Scene 3 (0:50 – 1:35) | Flow 3: Emergent Authority 3/3 Quorum & Dispute Arbitration
+- **🖥️ Trên màn hình:**
+  - `0:50–1:15`: Quay lại màn hình chính, ở cột phải **🔐 3-of-3 Release Quorum**, bấm lần lượt:
+    1. **Slot 1 (Khánh Linh):** `✍️ Sign Approval (1/3)` $\rightarrow$ Lên `1/3`.
+    2. **Slot 2 (Trung Quân):** `✍️ Sign Approval (2/3)` $\rightarrow$ Lên `2/3`.
+  - `1:15–1:35`: Chỉ vào **Slot 3 (Dr. Cường Thịnh)** vừa được mở khóa nhờ bằng chứng vi phạm `403` của Nhật Tân, bấm **`⚖️ Revoke Nhật Tân & Sign (3/3)`** $\rightarrow$ Đạt **`3/3 Unlocked`**!
+  - Bấm **`⬇️ Download Certificate (.json)`** trên chứng chỉ `CERT-TIDE-RMIT-2026-303` và bấm **`⬇️ Export Full IP Bundle (3/3 Unlocked)`** ở cột trái để trình duyệt tải file giải mã thật về máy!
 - **🎙️ Voiceover (English — 45s):**
-  > *"To prevent Nhật Tân from holding the capstone team hostage, **Khánh Linh** signs Slot 1, and **Trung Quân** signs Slot 2. Normally, Advisor **Dr. Cường Thịnh’s** arbitration shard is cryptographically dormant so he cannot collude against an innocent student. But because the Audit Log recorded Nhật Tân’s 403 breach, Dr. Cường Thịnh can now click **Revoke Nhật Tân and Sign Slot 3**.*  
-  > *The moment all **3 of 3 shards align**, decryption authority **emerges transiently in the browser** via TideCloak's `doDecrypt`. All three files unlock instantly and mint a **Verified IP Release Certificate**."*
+  > *"Now, Nhật Tân abandons the team. Normally, a strict 3-of-3 multi-sig would permanently deadlock Khánh Linh and Trung Quân from publishing to IEEE. Here is how **Emergent Authority** solves both security and deadlock:*  
+  > *In the **Quorum Panel**, **Khánh Linh** signs Shard 1 of 3. **Trung Quân** signs Shard 2 of 3. At 2 of 3, the vault remains cryptographically locked.*  
+  > *Because the **Immutable Audit Log** proved Nhật Tân's misconduct, Academic Ethics Chair **Dr. Cường Thịnh**’s dormant arbitration shard unlocks—allowing him to revoke Nhật Tân and co-sign **Shard 3 of 3**.*  
+  > *The moment all **3 of 3 shards align**, decryption authority **emerges transiently right inside the browser** via TideCloak's `doDecrypt`. All three IP assets unlock for download, minting a **Verified IP Release Certificate**."*
 
-### ⏱️ Phân Cảnh 4 (1:40 – 2:00) | Kết Luận Ngắn Gọn & Đắt Giá
-- **🖥️ Thao tác trên màn hình:**
-  - Chỉ vào **Chứng chỉ `CERT-TIDE-RMIT-2026-303`** và bảng **Immutable Activity & Quorum Audit Log** ở dưới cùng.
-- **🎙️ Voiceover (English — 20s):**
-  > *"Unlike standard OAuth or RBAC where a server still holds a master key, **TideCloak** ensures authority never exists at rest—it emerges only when legitimate human consensus aligns. **ScholarLock**: Provable Zero-Trust IP Protection for collaborative research."*
+### ⏱️ Scene 4 (1:35 – 2:00) | Why TideCloak Matters & Real-World Impact
+- **🖥️ Trên màn hình:** Bấm nút `⬇️ Export Audit Ledger (.json)` ở bảng Audit Log cuối trang, sau đó chuyển sang Slide 3 của `docs/pitch_slides.html` (1:45–2:00).
+- **🎙️ Voiceover (English — 25s):**
+  > *"If ScholarLock used traditional OAuth, JWTs, or backend RBAC, a database admin or a compromised server could still silently dump every file. With **TideCloak**, master decryption authority **does not exist at rest**—neither in the database nor in any admin account. It emerges only when legitimate human governance aligns. **ScholarLock**: Provable Zero-Trust IP Protection for the next generation of research."*
+
+---
+
+## 🛡️ Quy Tắc Git Chung Cho Cả 4 Thành Viên
+
+```bash
+git status
+# 1. Chỉ git add đúng file thuộc quyền sở hữu trong bảng phân công của mình!
+git add <file-của-bạn>
+git commit -m "feat(<role>): <mô-tả-ngắn>"
+git pull --rebase origin main
+npm run build
+git push origin main
+```

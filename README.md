@@ -5,25 +5,25 @@
 > **A zero-trust academic IP vault where no rogue co-author, university administrator, or cloud operator can unilaterally steal, decrypt, or commercialize shared research breakthroughs.**
 
 ## Vision & originality
-- **Cryptographic Co-Ownership:** High-value research assets (`research_paper_final.pdf`, `brain_cancer_model.pth`, `confidential_patient_dataset.csv`) are locked without any static master key.
-- **Emergent Authority:** Decryption and export authority never exists at rest—it emerges transiently in-browser only when co-author identities, tag policies, and quorum signatures align.
+- **Cryptographic Co-Ownership:** Shared research assets (model weights, clinical datasets, papers) are locked with zero master keys at rest.
+- **Emergent Authority:** Decryption authority emerges transiently in-browser only when co-author identities, tag policies, and quorum signatures align.
 
 ## Trust constraint insight
-- **The Bottleneck:** Collaborative research is held back by insider exfiltration (a rogue teammate stealing/selling AI weights) and centralized custody (IT admins holding master keys to unpublished drafts).
-- **The Breakthrough:** By removing unilateral control, teams can co-train proprietary models on sensitive clinical data without trusting a central operator or fearing a rogue partner.
+- **The Bottleneck:** Collaborative research is stalled by insider theft (a rogue member selling AI weights) and centralized custody (IT admins holding keys to unpublished drafts).
+- **The Breakthrough:** Eliminating unilateral control enables joint training on sensitive data without trusting a central operator or fearing a rogue partner.
 
 ## Value & impact
-- **Sovereignty for Co-Authors:** Student innovators and university labs retain verifiable ownership over joint IP.
-- **Deadlock-Proof Arbitration:** If a rogue member ("Nhật Tân") attempts unilateral IP theft, ScholarLock blocks export (`1/3 shards`) and triggers an ethics-arbitrated dispute quorum (`3/3 shards`) so honest researchers are never held hostage.
+- **Sovereignty for Co-Authors:** Student researchers and university labs retain cryptographically verifiable ownership over joint IP.
+- **Deadlock-Proof Arbitration:** If a rogue member attempts unilateral theft, ScholarLock blocks export (1/3 shards) and triggers an ethics dispute quorum (3/3 shards) so honest researchers are never held hostage.
 
 ## Why TideCloak matters
-- **Beyond Standard RBAC:** Conventional RBAC relies on servers that hold plaintext master keys.
-- **TideCloak Enforced:** Built on `@tidecloak/react` (`useTideCloak`, `hasRealmRole`, tag-bound `doEncrypt`/`doDecrypt`). Research assets remain **100% cryptographically blind (`AES-256-GCM`)**—unilateral insider or admin overrides are mathematically impossible.
+- **Beyond Standard RBAC:** Conventional RBAC relies on servers holding plaintext keys.
+- **TideCloak Enforced:** Built on `@tidecloak/react` (`useTideCloak`, `hasRealmRole`, tag-bound `doEncrypt`/`doDecrypt`). Vault assets remain 100% cryptographically blind (`AES-256-GCM`)—unilateral insider or admin overrides are mathematically impossible.
 
 ## Prototype & storytelling
 Judges can test two contrasting live flows:
-1. 🔴 **Rogue & Admin Attacks Blocked:** Click Nhật Tân’s **"Attempt Unilateral IP Export"** (`403 UNILATERAL_EXFILTRATION_BLOCKED` — `1/3 shards`) and test **"Admin Master Override"** (`403 ZERO_CUSTODY_ENFORCED` — `0/3 shards`).
-2. 🟢 **Emergent Authority Release:** Khánh Linh, Trung Quân, and Ethics Chair Dr. Cường Thịnh co-sign a **3-of-3 Quorum** to revoke Nhật Tân’s shard, decrypt the full IP bundle in-browser, and mint a verified release certificate.
+1. 🔴 **Attacks Blocked:** Click Nhật Tân’s **"Attempt Unilateral IP Export"** (`403 UNILATERAL_EXFILTRATION_BLOCKED` — 1/3 shards) and test **"Admin Master Override"** (`403 ZERO_CUSTODY_ENFORCED` — 0/3 shards).
+2. 🟢 **Emergent Authority Release:** Khánh Linh, Trung Quân, and Dr. Cường Thịnh co-sign a **3-of-3 Quorum** to revoke the rogue shard, decrypt the IP bundle in-browser, and mint a verified release certificate.
 
 ---
 
