@@ -3,312 +3,265 @@ import React from "react";
 export default function QuorumDisputeView({
   coAuthors,
   arbitrator,
-  assets,
+  activeUser,
   signedShards,
   rogueBreachLogged,
   onSignShard,
-  onTriggerRogueAttack,
   certificateTimestamp,
 }) {
   const linh = coAuthors.find((a) => a.id === "linh");
   const quan = coAuthors.find((a) => a.id === "quan");
   const tan = coAuthors.find((a) => a.id === "tan");
 
-  const shardList = [
-    {
-      key: "linh",
-      actor: linh,
-      badge: "SHARD 1 OF 3 · CO-AUTHOR SHARE",
-      buttonLabel: "👩‍🔬 Khánh Linh: Sign Shard 1/3 (Co-Author Approval)",
-      signedLabel: "✓ Shard 1/3 Signed by Khánh Linh",
-      sigHash: "0x94a8f1c2...e71b309d (Ed25519 · TideCloak Enclave)",
-      statement:
-        "I approve the official IEEE manuscript submission and licensed clinical release of the 3D-ViT brain tumor weights.",
-    },
-    {
-      key: "quan",
-      actor: quan,
-      badge: "SHARD 2 OF 3 · CO-AUTHOR SHARE",
-      buttonLabel: "👨‍💻 Trung Quân: Sign Shard 2/3 (Co-Author Approval)",
-      signedLabel: "✓ Shard 2/3 Signed by Trung Quân",
-      sigHash: "0x3c7d09b4...a82f614e (Ed25519 · TideCloak Enclave)",
-      statement:
-        "I verify that all 1,200 patient MRI records are de-identified under RMIT Ethics Protocol and approve 3/3 release.",
-    },
-    {
-      key: "thinh",
-      actor: arbitrator,
-      badge: "SHARD 3 OF 3 · ETHICS ARBITRATOR",
-      buttonLabel:
-        "⚖️ Dr. Cường Thịnh: Revoke Nhật Tân & Sign Arbitration Shard 3/3",
-      signedLabel: "✓ Nhật Tân Revoked & Shard 3/3 Co-Signed by Dr. Cường Thịnh",
-      sigHash: "0x7f12e5d9...c04a883b (RMIT Ethics Chair Arbitration Key)",
-      statement:
-        "Audit Log confirms Nhật Tân’s unilateral 403 exfiltration attempt. Invoking Academic Dispute Resolution to revoke Nhật Tân’s shard and prevent project deadlock.",
-      isArbitration: true,
-    },
-  ];
-
   const quorumCount = Object.values(signedShards).filter(Boolean).length;
   const isMasterUnlocked = quorumCount === 3;
   const progressPercent = Math.round((quorumCount / 3) * 100);
 
   return (
-    <section className="section">
-      <div className="section-heading">
-        <div>
-          <div className="eyebrow">
-            <span /> FLOW 3 · DEADLOCK-PROOF DISPUTE ARBITRATION &amp; EMERGENT AUTHORITY
+    <aside className="quorum-column">
+      <div className="panel-card quorum-panel-card">
+        <div className="quorum-panel-header">
+          <div>
+            <span className="panel-kicker">EMERGENT AUTHORITY CONSENSUS</span>
+            <h2>🔐 3-of-3 Release Quorum</h2>
           </div>
-          <h2>3-of-3 Threshold Key Shard Assembler</h2>
-        </div>
-        <span className={`status-pill ${isMasterUnlocked ? "emerald" : "amber"}`}>
-          {isMasterUnlocked
-            ? "⚡ 3/3 Shards Aligned — Emergent Authority Active"
-            : `🔐 Quorum Progress: ${quorumCount} of 3 Shards Signed`}
-        </span>
-      </div>
-
-      {/* Breach Evidence & Anti-Deadlock Banner */}
-      <div className={`arbitration-context-card ${rogueBreachLogged ? "flagged" : ""}`}>
-        <div>
-          <span className="context-kicker">
-            {rogueBreachLogged
-              ? "🚨 IMMUTABLE BREACH EVIDENCE VERIFIED IN AUDIT LOG"
-              : "⚖️ CRYPTOGRAPHIC GUARDRAIL · ANTI-COLLUSION & DEADLOCK PROTECTION"}
-          </span>
-          <h3>
-            {rogueBreachLogged
-              ? `Rogue Member (${tan.name}) Flagged for Unilateral 403 Exfiltration — Arbitration Shard Unlocked`
-              : "Why 3-of-3 Threshold Shares & Breach-Gated Arbitration?"}
-          </h3>
-          <p>
-            All 3 IP assets are sealed together under <b>3-of-3 Threshold Secret Sharing</b>{" "}
-            (not 1 key per file, which would still allow single-file theft). Furthermore,
-            Ethics Chair <b>{arbitrator.name}’s Arbitration Shard 3/3 is cryptographically dormant</b>{" "}
-            while {tan.name} is in good standing—preventing 2 students and an advisor from
-            unfairly colluding to exclude an innocent co-author.
-          </p>
-        </div>
-        {!rogueBreachLogged && !signedShards.thinh && (
-          <button
-            type="button"
-            className="button danger-sm"
-            onClick={onTriggerRogueAttack}
-          >
-            🚨 Simulate Nhật Tân’s 403 Breach First
-          </button>
-        )}
-      </div>
-
-      {/* 3-of-3 Key Shard Progress Bar */}
-      <div className="quorum-progress-shell">
-        <div className="quorum-progress-labels">
-          <span>
-            BUNDLE THRESHOLD ASSEMBLY:{" "}
-            <b>
-              {quorumCount}/3 AUTHORITY SHARDS ({progressPercent}%)
-            </b>
-          </span>
-          <span className={isMasterUnlocked ? "emerald-text" : "muted-text"}>
+          <span className={`status-pill ${isMasterUnlocked ? "emerald" : "amber"}`}>
             {isMasterUnlocked
-              ? "✓ Transient In-Browser Key Reconstructed via TideCloak doDecrypt()"
-              : `Requires ${3 - quorumCount} more cryptographic signature(s) to reconstruct Master Bundle key`}
+              ? "⚡ 3/3 Unlocked"
+              : `${quorumCount}/3 Shards`}
           </span>
         </div>
-        <div className="quorum-progress-track">
+
+        {/* 3/3 Progress Bar */}
+        <div className="quorum-meter-box">
+          <div className="quorum-meter-labels">
+            <span>
+              Threshold Key Assembly: <b>{quorumCount} of 3 Shards</b>
+            </span>
+            <span className={isMasterUnlocked ? "emerald-text" : "muted-text"}>
+              {isMasterUnlocked
+                ? "✓ Key Reconstructed in Browser"
+                : "Requires 3/3 to Decrypt & Export"}
+            </span>
+          </div>
+          <div className="quorum-progress-track">
+            <div
+              className={`quorum-progress-fill ${isMasterUnlocked ? "complete" : ""}`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <div className="quorum-steps-row">
+            <span className={quorumCount >= 0 ? "step-active" : ""}>0/3 Locked</span>
+            <span className={quorumCount >= 1 ? "step-active" : ""}>1/3</span>
+            <span className={quorumCount >= 2 ? "step-active" : ""}>2/3</span>
+            <span className={isMasterUnlocked ? "step-complete" : ""}>
+              3/3 Unlocked
+            </span>
+          </div>
+        </div>
+
+        {/* 3 Signature Slots */}
+        <div className="quorum-slots-list">
+          {/* Slot 1: Khánh Linh */}
           <div
-            className={`quorum-progress-fill ${isMasterUnlocked ? "complete" : ""}`}
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-        <div className="quorum-steps-row">
-          <span className={quorumCount >= 0 ? "step-active" : ""}>
-            0/3 Blind At Rest
-          </span>
-          <span className={quorumCount >= 1 ? "step-active" : ""}>
-            1/3 Co-Author Share 1
-          </span>
-          <span className={quorumCount >= 2 ? "step-active" : ""}>
-            2/3 Co-Author Share 2
-          </span>
-          <span className={isMasterUnlocked ? "step-complete" : ""}>
-            3/3 Emergent Authority Unlocked
-          </span>
-        </div>
-      </div>
-
-      {/* 3 Co-Sign Shard Cards */}
-      <div className="shard-grid">
-        {shardList.map((item) => {
-          const isSigned = Boolean(signedShards[item.key]);
-          const isDormantArbitrator = item.isArbitration && !rogueBreachLogged && !isSigned;
-          const isEligibleArbitrator = item.isArbitration && rogueBreachLogged && !isSigned;
-
-          let stateLabel = "AWAITING";
-          let stateClass = "pending";
-          if (isSigned) {
-            stateLabel = "SIGNED";
-            stateClass = "signed";
-          } else if (isDormantArbitrator) {
-            stateLabel = "🔒 DORMANT (NO BREACH)";
-            stateClass = "dormant";
-          } else if (isEligibleArbitrator) {
-            stateLabel = "⚡ BREACH VERIFIED — ELIGIBLE";
-            stateClass = "eligible";
-          }
-
-          return (
-            <article
-              key={item.key}
-              className={`shard-card ${isSigned ? "signed" : ""} ${
-                item.isArbitration ? "arbitration-card" : ""
-              } ${isDormantArbitrator ? "dormant-card" : ""} ${
-                isEligibleArbitrator ? "eligible-card" : ""
-              }`}
-            >
-              <div className="shard-card-top">
-                <span className="shard-badge">{item.badge}</span>
-                <span className={`shard-state ${stateClass}`}>{stateLabel}</span>
-              </div>
-
-              <div className="shard-person">
-                <span className={`avatar ${isSigned ? "signed-avatar" : ""}`}>
-                  {item.actor.avatar}
+            className={`quorum-slot-card ${signedShards.linh ? "signed" : ""} ${
+              activeUser?.id === "linh" ? "active-actor-slot" : ""
+            }`}
+          >
+            <div className="slot-top">
+              <div className="slot-person">
+                <span className={`avatar mini ${signedShards.linh ? "signed-avatar" : ""}`}>
+                  {linh.avatar}
                 </span>
                 <div>
-                  <strong>{item.actor.name}</strong>
-                  <small>{item.actor.roleTitle}</small>
+                  <strong>👩‍🔬 {linh.name}</strong>
+                  <small>{linh.roleTitle} · Shard 1/3</small>
                 </div>
               </div>
-
-              {item.isArbitration && (
-                <div className={`revocation-pill ${isDormantArbitrator ? "dormant-pill" : ""}`}>
-                  {isSigned
-                    ? "🚫 Nhật Tân’s Shard 3/3 Permanently Revoked"
-                    : isDormantArbitrator
-                      ? "🛡️ Guardrail Active: Locked While Nhật Tân Is in Good Standing"
-                      : "⚡ Breach Logged: Authorized to Revoke Nhật Tân’s Shard 3/3"}
-                </div>
-              )}
-
-              {isDormantArbitrator ? (
-                <div className="guardrail-box">
-                  <strong>Cryptographic Anti-Collusion Guardrails:</strong>
-                  <ul>
-                    <li>
-                      <b>1/3 Bounded Shard:</b> Cannot decrypt anything alone (needs 2
-                      co-authors).
-                    </li>
-                    <li>
-                      <b>Breach-Triggered Policy:</b> Locked in Dormant state while Nhật
-                      Tân is in good standing—prevents unfair collusion against a teammate.
-                    </li>
-                  </ul>
-                </div>
-              ) : (
-                <p className="shard-statement">“{item.statement}”</p>
-              )}
-
-              {isSigned ? (
-                <div className="signature-proof-box">
-                  <strong>{item.signedLabel}</strong>
-                  <code>{item.sigHash}</code>
-                </div>
-              ) : isDormantArbitrator ? (
-                <div className="dormant-actions">
-                  <button
-                    type="button"
-                    className="button full-width"
-                    disabled
-                  >
-                    🔒 Dormant — Requires Immutable 403 Breach in Audit Log
-                  </button>
-                  <button
-                    type="button"
-                    className="button outline full-width simulate-breach-btn"
-                    onClick={onTriggerRogueAttack}
-                  >
-                    🚨 Simulate Nhật Tân’s 403 Breach to Unlock Arbitration
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className={`button full-width ${
-                    item.isArbitration ? "arbitration-btn" : "dark"
-                  }`}
-                  onClick={() => onSignShard(item.key)}
-                >
-                  {item.buttonLabel}
-                </button>
-              )}
-            </article>
-          );
-        })}
-      </div>
-
-      {/* Verified IP Release Certificate (Rendered when 3/3 Quorum Aligns) */}
-      {isMasterUnlocked && (
-        <div
-          className="certificate-shell"
-          role="region"
-          aria-label="Verified IP Release Certificate"
-        >
-          <div className="certificate-header">
-            <div>
-              <span className="cert-kicker">
-                ⚡ TIDECLOAK EMERGENT AUTHORITY · SOVEREIGN RELEASE CERTIFICATE
+              <span className={`shard-state ${signedShards.linh ? "signed" : "pending"}`}>
+                {signedShards.linh ? "✓ SIGNED" : "SLOT 1/3"}
               </span>
-              <h3>Verified Academic IP &amp; Commercialization Release Certificate</h3>
             </div>
-            <div className="cert-seal">
-              <span>3/3 QUORUM</span>
-              <strong>VERIFIED</strong>
-            </div>
+
+            {signedShards.linh ? (
+              <code className="slot-sig-hash">
+                Sig: 0x94a8f1c2...e71b309d (Ed25519 Verified)
+              </code>
+            ) : (
+              <button
+                type="button"
+                className="button dark full-width btn-sm"
+                onClick={() => onSignShard("linh")}
+              >
+                ✍️ Sign Approval (1/3)
+              </button>
+            )}
           </div>
 
-          <div className="cert-meta-grid">
-            <div>
-              <span>CERTIFICATE ID</span>
-              <strong>CERT-TIDE-RMIT-2026-303</strong>
-            </div>
-            <div>
-              <span>DECRYPTION ENCLAVE</span>
-              <strong>TideCloak In-Browser doDecrypt()</strong>
-            </div>
-            <div>
-              <span>ROGUE SHARD STATUS</span>
-              <strong className="crimson-text">
-                Nhật Tân (Shard 3/3) REVOKED
-              </strong>
-            </div>
-            <div>
-              <span>TIMESTAMP (UTC)</span>
-              <strong>{certificateTimestamp || new Date().toISOString()}</strong>
-            </div>
-          </div>
-
-          <div className="cert-unlocked-assets">
-            <h4>🔓 Transiently Reconstructed Plaintext IP Bundle (In-Browser Only)</h4>
-            <div className="cert-asset-list">
-              {assets.map((asset) => (
-                <div key={asset.id} className="cert-asset-item">
-                  <div className="cert-asset-name">
-                    <span>{asset.icon}</span>
-                    <div>
-                      <strong>{asset.fileName}</strong>
-                      <code>Tag: _tide_{asset.tag} · {asset.size}</code>
-                    </div>
-                    <span className="unlocked-pill">PLAINTEXT UNLOCKED</span>
-                  </div>
-                  <p className="cert-asset-plaintext">{asset.unlockedPlaintext}</p>
+          {/* Slot 2: Trung Quân */}
+          <div
+            className={`quorum-slot-card ${signedShards.quan ? "signed" : ""} ${
+              activeUser?.id === "quan" ? "active-actor-slot" : ""
+            }`}
+          >
+            <div className="slot-top">
+              <div className="slot-person">
+                <span className={`avatar mini ${signedShards.quan ? "signed-avatar" : ""}`}>
+                  {quan.avatar}
+                </span>
+                <div>
+                  <strong>👨‍💻 {quan.name}</strong>
+                  <small>{quan.roleTitle} · Shard 2/3</small>
                 </div>
-              ))}
+              </div>
+              <span className={`shard-state ${signedShards.quan ? "signed" : "pending"}`}>
+                {signedShards.quan ? "✓ SIGNED" : "SLOT 2/3"}
+              </span>
             </div>
+
+            {signedShards.quan ? (
+              <code className="slot-sig-hash">
+                Sig: 0x3c7d09b4...a82f614e (Ed25519 Verified)
+              </code>
+            ) : (
+              <button
+                type="button"
+                className="button dark full-width btn-sm"
+                onClick={() => onSignShard("quan")}
+              >
+                ✍️ Sign Approval (2/3)
+              </button>
+            )}
+          </div>
+
+          {/* Slot 3: Dynamic Dispute & Ethics Arbitration Slot */}
+          <div
+            className={`quorum-slot-card slot3-card ${
+              signedShards.thinh
+                ? "signed"
+                : rogueBreachLogged
+                  ? "eligible-card"
+                  : "dormant-card"
+            } ${activeUser?.id === "thinh" ? "active-actor-slot" : ""}`}
+          >
+            {/* Original Shard 3 Holder Status (Nhật Tân) */}
+            <div className="rogue-slot-status">
+              <span>
+                🚨 <b>{tan.name}</b> (Co-Author · Shard 3/3)
+              </span>
+              <span
+                className={`rogue-status-chip ${
+                  signedShards.thinh
+                    ? "revoked"
+                    : rogueBreachLogged
+                      ? "breach"
+                      : "hostile"
+                }`}
+              >
+                {signedShards.thinh
+                  ? "🚫 SHARD REVOKED"
+                  : rogueBreachLogged
+                    ? "🚨 403 BREACH LOGGED"
+                    : "⚠️ Refusing to Co-Sign"}
+              </span>
+            </div>
+
+            {/* Ethics Arbitrator (Dr. Cường Thịnh) */}
+            <div className="slot-top arbitrator-top">
+              <div className="slot-person">
+                <span
+                  className={`avatar mini ${signedShards.thinh ? "signed-avatar" : ""}`}
+                >
+                  {arbitrator.avatar}
+                </span>
+                <div>
+                  <strong>⚖️ {arbitrator.name}</strong>
+                  <small>Ethics Arbitrator · Arbitration Shard 3/3</small>
+                </div>
+              </div>
+              <span
+                className={`shard-state ${
+                  signedShards.thinh
+                    ? "signed"
+                    : rogueBreachLogged
+                      ? "eligible"
+                      : "dormant"
+                }`}
+              >
+                {signedShards.thinh
+                  ? "✓ SIGNED"
+                  : rogueBreachLogged
+                    ? "⚡ UNLOCKED"
+                    : "🔒 DORMANT"}
+              </span>
+            </div>
+
+            <p className="arbitrator-rule-note">
+              {signedShards.thinh
+                ? "Nhật Tân’s shard revoked via Audit Log proof; Arbitration Shard 3/3 active."
+                : rogueBreachLogged
+                  ? "⚡ Breach Logged — Ethics Arbitration Unlocked! Dr. Cường Thịnh can now revoke Nhật Tân & sign 3/3."
+                  : "🔒 Dormant: Only unlocks if an immutable 403 breach is logged (prevents collusion against an innocent co-author)."}
+            </p>
+
+            {signedShards.thinh ? (
+              <code className="slot-sig-hash">
+                Sig: 0x7f12e5d9...c04a883b (Arbitration Key Verified)
+              </code>
+            ) : rogueBreachLogged ? (
+              <button
+                type="button"
+                className="button arbitration-btn full-width btn-sm"
+                onClick={() => onSignShard("thinh")}
+              >
+                ⚖️ Revoke Nhật Tân &amp; Sign (3/3)
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="button full-width btn-sm"
+                disabled
+              >
+                🔒 Locked — No Breach Logged
+              </button>
+            )}
           </div>
         </div>
-      )}
-    </section>
+
+        {/* Verified IP Release Certificate (Displayed as soon as 3/3 is signed) */}
+        {isMasterUnlocked && (
+          <div
+            className="certificate-compact"
+            role="region"
+            aria-label="Verified IP Release Certificate"
+          >
+            <div className="cert-compact-head">
+              <div>
+                <span className="cert-kicker">
+                  📜 TIDECLOAK SOVEREIGN RELEASE CERTIFICATE
+                </span>
+                <h3>CERT-TIDE-RMIT-2026-303</h3>
+              </div>
+              <span className="cert-verified-badge">3/3 VERIFIED</span>
+            </div>
+            <p className="cert-compact-body">
+              Transient decryption key assembled in-browser via{" "}
+              <code>doDecrypt()</code>. All 3 Capstone IP files are unlocked for
+              IEEE publication &amp; licensed deployment.
+            </p>
+            <div className="cert-compact-meta">
+              <span>
+                <b>Co-Signers:</b> Khánh Linh (1/3), Trung Quân (2/3), Dr. Cường
+                Thịnh (3/3)
+              </span>
+              <span>
+                <b>Revoked:</b> Nhật Tân (403 Breach) ·{" "}
+                {(certificateTimestamp || new Date().toISOString()).slice(11, 19)} UTC
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }
